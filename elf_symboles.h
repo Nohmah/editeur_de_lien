@@ -33,4 +33,9 @@ const char *portee_symbole(uint8_t st_info);
 /* nettoyage */
 void liberer_contexte(elf_contexte_t *ctx);
 
+/*Utile partie 5*/
+uint32_t valeur_symbole(const elf_contexte_t *ctx, int i);
+const char *nom_symbole(const elf_contexte_t *ctx, int i);
+
+
 #endif
