@@ -8,49 +8,36 @@
 #define FIX16(x) (file_big_endian ? reverse_2(x) : (x))
 #define FIX32(x) (file_big_endian ? reverse_4(x) : (x))
 
- 
-int main(int argc, char *argv[]){
-    if( argc < 2 ){
-        fprintf(stderr, "Usage: %s file.o\n", argv[0]);
-        return 1;
-    }
+/* A supprimer */
+// int main(int argc, char *argv[]){
+//     if( argc < 2 ){
+//         fprintf(stderr, "Usage: %s file.o\n", argv[0]);
+//         return 1;
+//     }
 
-    FILE *f = fopen(argv[1], "r");
-    if(!f) { perror("fopen"); return 1;}
-
-
-    Elf32_Ehdr hdr;
-    fread(&hdr, 1, sizeof(hdr), f);
-
-    
-    /* Check if the readen file is an ELF file. */
-    if( hdr.e_ident[EI_MAG0] != ELFMAG0 ||
-        hdr.e_ident[EI_MAG1] != ELFMAG1 ||
-        hdr.e_ident[EI_MAG2] != ELFMAG2 ||
-        hdr.e_ident[EI_MAG3] != ELFMAG3 ){
-        fprintf(stderr, "Not an ELF File.\n");
-        fclose(f);
-        return 1;
-    }
-    /* Does not allow ELF64, you can disable this condition, the program will works. */
-    if (hdr.e_ident[EI_CLASS] != ELFCLASS32) {
-        fprintf(stderr, "ELF64 non supporté\n");
-        fclose(f);
-        return 1;
-    }    
-
-    //elf_header(hdr);
-    elf_section(f, hdr);
-    fclose(f);
+//     FILE* f = fopen(argv[1], "r");
+//     if(!f) { perror("fopen"); return 1;}
 
 
-    return 0;
+//     Elf32_Ehdr hdr;
+//     fread(&hdr, 1, sizeof(hdr), f);
 
-}
+//     elf_header(f);
+//     elf_section(f);
+//     fclose(f);
+
+
+//     return 0;
+
+// }
 
 /* Print ELF header */
-void elf_header(Elf32_Ehdr hdr){
+void elf_header(FILE* f){
 
+    if(check_spec(f) == 0) return;
+    rewind(f);
+    Elf32_Ehdr hdr;
+    fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
     int file_big_endian = (hdr.e_ident[EI_DATA] == ELFDATA2MSB);
 
     printf("En-tête ELF:\n");
@@ -85,8 +72,12 @@ void elf_header(Elf32_Ehdr hdr){
 
 }
 
-void elf_section(FILE *f, Elf32_Ehdr hdr)
+void elf_section(FILE *f)
 {
+    if(check_spec(f) == 0) return;
+    rewind(f);
+    Elf32_Ehdr hdr;
+    fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
     int file_big_endian = (hdr.e_ident[EI_DATA] == ELFDATA2MSB);
 
     uint32_t shoff     = FIX32(hdr.e_shoff);
@@ -180,3 +171,34 @@ void print_flags(uint32_t flags)
 
     printf("%s", out);
 }
+
+int check_spec(FILE* f){
+    rewind(f);
+    Elf32_Ehdr hdr;
+    int be;
+    uint16_t arch;
+    fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
+    if( hdr.e_ident[EI_MAG0] != ELFMAG0 ||
+        hdr.e_ident[EI_MAG1] != ELFMAG1 ||
+        hdr.e_ident[EI_MAG2] != ELFMAG2 ||
+        hdr.e_ident[EI_MAG3] != ELFMAG3 ){
+        fprintf(stderr, "Not an ELF File.\n");
+        return 0;
+    }
+    /* Does not allow ELF64, you can disable this condition, the program will works. */
+    if (hdr.e_ident[EI_CLASS] != ELFCLASS32) {
+        fprintf(stderr, "Not an ELF32 File\n");
+        return 0;
+    }
+
+    be = (hdr.e_ident[EI_DATA] == ELFDATA2MSB);
+    arch = be ? reverse_2(hdr.e_machine) : hdr.e_machine;
+
+    if (arch != EM_ARM){
+        fprintf(stderr, "Not a ARM Arch.\n");
+        return 0;
+    }
+    return 1;
+    return 1;
+}
+
