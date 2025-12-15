@@ -1,5 +1,5 @@
-#ifndef __ELF_READER__
-#define __ELF_READER__
+#ifndef __ELF_HEADER_AND_SECTION__
+#define __ELF_HEADER_AND_SECTION__
 
 #include <elf.h>
 #include <stdio.h>
