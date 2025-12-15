@@ -10,6 +10,9 @@ typedef struct {
     Elf32_Ehdr ehdr;        // entête ELF
     Elf32_Shdr *sections;   // table des sections
     char *noms_sections;    // table des noms de sections
+    Elf32_Sym *symboles;
+    char *noms_symboles;
+    int nb_symboles;
 } elf_contexte_t;
 
 /* Lecture ELF de base */

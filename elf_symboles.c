@@ -102,17 +102,15 @@ int trouver_section(const elf_contexte_t *ctx, const char *nom)
     return -1;
 }
 
-int lire_table_symboles(const elf_contexte_t *ctx)
+int lire_table_symboles(elf_contexte_t *ctx)
 {
     int idx_symtab;
     int idx_strtab;
     Elf32_Shdr *symtab;
     Elf32_Shdr *strtab;
-    Elf32_Sym *symboles;
-    char *noms;
-    int nb_symboles;
     int i;
 
+    /* Trouver les sections .symtab et .strtab */
     idx_symtab = trouver_section(ctx, ".symtab");
     idx_strtab = trouver_section(ctx, ".strtab");
 
@@ -124,54 +122,50 @@ int lire_table_symboles(const elf_contexte_t *ctx)
     symtab = &ctx->sections[idx_symtab];
     strtab = &ctx->sections[idx_strtab];
 
-    nb_symboles = symtab->sh_size / sizeof(Elf32_Sym);
+    /* Calcul du nombre de symboles */
+    ctx->nb_symboles = symtab->sh_size / sizeof(Elf32_Sym);
 
-    symboles = malloc(symtab->sh_size);
-    noms = malloc(strtab->sh_size);
-    
-    if (symboles == NULL || noms == NULL) {
+    /* Allocation mémoire */
+    ctx->symboles = malloc(symtab->sh_size);
+    ctx->noms_symboles = malloc(strtab->sh_size);
+
+    if (ctx->symboles == NULL || ctx->noms_symboles == NULL) {
         perror("malloc symboles");
         return -1;
     }
 
-    // Lire la table des symboles
+    /* Lecture de la table des symboles */
     lseek(ctx->fd, symtab->sh_offset, SEEK_SET);
-    if (read(ctx->fd, symboles, symtab->sh_size) != symtab->sh_size) {
+    if (read(ctx->fd, ctx->symboles, symtab->sh_size) != symtab->sh_size) {
         perror("read symboles");
-        free(symboles);
-        free(noms);
         return -1;
     }
 
-    // Lire la table des noms de symboles
+    /* Lecture de la table des noms de symboles */
     lseek(ctx->fd, strtab->sh_offset, SEEK_SET);
-    if (read(ctx->fd, noms, strtab->sh_size) != strtab->sh_size) {
+    if (read(ctx->fd, ctx->noms_symboles, strtab->sh_size) != strtab->sh_size) {
         perror("read noms symboles");
-        free(symboles);
-        free(noms);
         return -1;
     }
 
-    // Afficher l'en-tête
+    /* Affichage */
     printf("Index  Valeur    Type     Portée   Section  Nom\n");
 
-    // Afficher chaque symbole
-    for (i = 0; i < nb_symboles; i++) {
-        char *nom_symbole = noms + symboles[i].st_name;
-        
+    for (i = 0; i < ctx->nb_symboles; i++) {
+        char *nom_symbole = ctx->noms_symboles + ctx->symboles[i].st_name;
+
         printf("%5d  %08x %-8s %-8s %7d  %s\n",
                i,
-               symboles[i].st_value,
-               type_symbole(symboles[i].st_info),
-               portee_symbole(symboles[i].st_info),
-               symboles[i].st_shndx,
+               ctx->symboles[i].st_value,
+               type_symbole(ctx->symboles[i].st_info),
+               portee_symbole(ctx->symboles[i].st_info),
+               ctx->symboles[i].st_shndx,
                nom_symbole);
     }
 
-    free(symboles);
-    free(noms);
     return 0;
 }
+
 
 const char *type_symbole(uint8_t st_info)
 {
@@ -205,14 +199,37 @@ const char *portee_symbole(uint8_t st_info)
 
 void liberer_contexte(elf_contexte_t *ctx)
 {
-    if (ctx->sections != NULL) {
+    if (ctx->sections)
         free(ctx->sections);
-    }
-    if (ctx->noms_sections != NULL) {
+    if (ctx->noms_sections)
         free(ctx->noms_sections);
-    }
+    if (ctx->symboles)
+        free(ctx->symboles);
+    if (ctx->noms_symboles)
+        free(ctx->noms_symboles);
 }
-/* TEST de la partie symboles
+
+
+uint32_t valeur_symbole(const elf_contexte_t *ctx, int i)
+{
+    if (i < 0 || i >= ctx->nb_symboles) {
+        return 0;
+    }
+
+    return ctx->symboles[i].st_value;
+}
+
+const char *nom_symbole(const elf_contexte_t *ctx, int i)
+{
+    if (i < 0 || i >= ctx->nb_symboles) {
+        return NULL;
+    }
+
+    return ctx->noms_symboles + ctx->symboles[i].st_name;
+}
+
+
+/*TEST partie symboles
 int main(int argc, char **argv)
 {
     elf_contexte_t ctx;
