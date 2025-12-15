@@ -1,12 +1,19 @@
+#include <elf_symboles.h>
+
+//////////////////////////////////////////
+// A MODIFIER ATTENTION //
+/*
+- Separer REL et RELA
+*/
+///////////////////////////////////
+
 
 //Affiche les relations d'une entrée donée
-void lire_relation_entree(elf_contexte_t *ctx)
+void afficher_relations_entree(Elf32_Rela *entree_rela)
 {
-    Elf32_Rela *entree_rela;
-
     //Les printfs sont peut-être pas encore corrects, faut cast en string peut-être ?
-    printf("%s", entree_rela->r_offset);
-    printf("%s", entree_rela->r_info);
+    printf("%s ", entree_rela->r_offset);
+    printf("%s ", entree_rela->r_info);
 
     //On extrait le type, et on l'associe à son équivalent texte
     unsigned char type_c = ELF32_R_TYPE(entree_rela->r_info);
@@ -28,11 +35,23 @@ void lire_relation_entree(elf_contexte_t *ctx)
         case 15:
             strcpy(type_s, "STT_HIPROC");
     }
-    printf("%s", type_s);
+    printf("%s ", type_s);
 
     //Sym. value, sym. name : utiliser table des symboles
     //On extrait l'index de table des symboles, et on l'associe à la table des symboles
     unsigned char sym_c = (unsigned char)ELF32_R_SYM(entree_rela->r_info);
 
-    printf("%d", entree_rela->r_addend);
+
+    printf("%d\n", entree_rela->r_addend);
+}
+
+//Itere sur une table de reimplantations, et affiche toutes les entrees
+void afficher_table_relations(Elf32_Shdr reitab)
+{
+    nb_relations = reitab->sh_size / sizeof(Elf32_Rela);
+    printf("Offset Info Type Sym.Value Sym.Name + Addend")
+    for (int i = 0; i < nb_relations; i++)
+    {
+        afficher_relations_entree()
+    }
 }
