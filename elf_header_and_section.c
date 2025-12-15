@@ -8,33 +8,9 @@
 #define FIX16(x) (file_big_endian ? reverse_2(x) : (x))
 #define FIX32(x) (file_big_endian ? reverse_4(x) : (x))
 
-/* A supprimer */
-// int main(int argc, char *argv[]){
-//     if( argc < 2 ){
-//         fprintf(stderr, "Usage: %s file.o\n", argv[0]);
-//         return 1;
-//     }
-
-//     FILE* f = fopen(argv[1], "r");
-//     if(!f) { perror("fopen"); return 1;}
-
-
-//     Elf32_Ehdr hdr;
-//     fread(&hdr, 1, sizeof(hdr), f);
-
-//     elf_header(f);
-//     elf_section(f);
-//     fclose(f);
-
-
-//     return 0;
-
-// }
-
 /* Print ELF header */
 void elf_header(FILE* f){
 
-    if(check_spec(f) == 0) return;
     rewind(f);
     Elf32_Ehdr hdr;
     fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
@@ -72,9 +48,8 @@ void elf_header(FILE* f){
 
 }
 
-void elf_section(FILE *f)
-{
-    if(check_spec(f) == 0) return;
+void elf_section(FILE *f){
+    
     rewind(f);
     Elf32_Ehdr hdr;
     fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
@@ -198,7 +173,6 @@ int check_spec(FILE* f){
         fprintf(stderr, "Not a ARM Arch.\n");
         return 0;
     }
-    return 1;
     return 1;
 }
 
