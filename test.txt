@@ -1,2 +1,0 @@
-ceci est un test.
-si il est là c'est que le clone a fonctionné.
