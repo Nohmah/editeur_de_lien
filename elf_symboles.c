@@ -212,7 +212,7 @@ void liberer_contexte(elf_contexte_t *ctx)
         free(ctx->noms_sections);
     }
 }
-
+/* TEST de la partie symboles
 int main(int argc, char **argv)
 {
     elf_contexte_t ctx;
@@ -257,4 +257,4 @@ int main(int argc, char **argv)
     liberer_contexte(&ctx);
     close(ctx.fd);
     return EXIT_SUCCESS;
-}
+}*/
