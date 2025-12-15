@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <elf.h>
 #include "util.h"
-#include "elf_reader.h"
+#include "elf_header_and_section.h"
 
 #define FIX16(x) (file_big_endian ? reverse_2(x) : (x))
 #define FIX32(x) (file_big_endian ? reverse_4(x) : (x))
