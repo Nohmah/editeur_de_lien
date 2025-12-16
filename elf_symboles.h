@@ -3,16 +3,18 @@
 
 #include <elf.h>
 #include <stdint.h>
-
+#include <stdio.h>
 
 typedef struct {
-    int fd;                 // descripteur du fichier
-    Elf32_Ehdr ehdr;        // entête ELF
-    Elf32_Shdr *sections;   // table des sections
-    char *noms_sections;    // table des noms de sections
-    Elf32_Sym *symboles;
-    char *noms_symboles;
-    int nb_symboles;
+  FILE *file;           /* fichier ELF ouvert */
+  Elf32_Ehdr ehdr;      /* entête ELF */
+  Elf32_Shdr *sections; /* table des sections */
+  char *noms_sections;  /* table des noms de sections */
+
+  /* table des symboles */
+  Elf32_Sym *symboles;
+  char *noms_symboles;
+  int nb_symboles;
 } elf_contexte_t;
 
 /* Lecture ELF de base */
@@ -30,12 +32,11 @@ int lire_table_symboles(elf_contexte_t *ctx);
 const char *type_symbole(uint8_t st_info);
 const char *portee_symbole(uint8_t st_info);
 
-/* nettoyage */
-void liberer_contexte(elf_contexte_t *ctx);
-
-/*Utile partie 5*/
+/* Accès pour la partie 5 */
 uint32_t valeur_symbole(const elf_contexte_t *ctx, int i);
 const char *nom_symbole(const elf_contexte_t *ctx, int i);
 
+/* Nettoyage */
+void liberer_contexte(elf_contexte_t *ctx);
 
 #endif
