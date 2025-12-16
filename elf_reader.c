@@ -3,9 +3,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include "elf_header.h"
 #include "elf_section_table.h"
 #include "elf_symboles.h"
+#include "elf_lecture_section.h"
 
 void usage(char *programme) {
     fprintf(stderr, "\nUsage:\n");
@@ -35,10 +37,14 @@ int main(int argc, char *argv[]) {
 	// Vérification de si le fichier est exploitable ou non
 	FILE* f = fopen(argv[1], "rb");
 	if(!f){
-		fprintf(stderr, "Erreur lors de l'ouverture du fichier.\n");
+		if (errno == ENOENT){
+	        fprintf(stderr, "Erreur : le fichier '%s' n'existe pas.\n", argv[1]);
+		} else {
+			fprintf(stderr, "Erreur lors de l'ouverture du fichier.\n");
+		}
 		exit(1);
 	}
-	if (!check_spec(f)) {
+	if (!check_spec(f)){
 	    fprintf(stderr, "Ce programme ne supporte que les fichiers ELF 32 bits ARM big endian.\n");
 	    exit(1);
 	}
@@ -54,7 +60,22 @@ int main(int argc, char *argv[]) {
 	    elf_section(f);
 	}
 	else if (strcmp(commande, "-x") == 0) {
-		printf("pas fait\n");
+		if (argc>=4){
+			elf_lecture_section(f, argv[3]);
+		} else {
+			elf_section(f);
+			printf("Veuillez entrer le nom ou le numéro de la section : ");
+			char section[100];
+			if (fgets(section, sizeof(section), stdin) != NULL){
+				section[strcspn(section, "\n")] = '\0';
+				if (strlen(section)>0){
+					elf_lecture_section(f, section);
+				} else {
+					fprintf(stderr, "Erreur: Aucune section spécifiée.\n");
+	    			exit(1);
+				}
+			}
+		}
 	}
 	else if (strcmp(commande, "-s") == 0) {
 	    elf_contexte_t ctx;
