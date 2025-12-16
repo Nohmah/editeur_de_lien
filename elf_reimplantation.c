@@ -189,6 +189,14 @@ Elf32_Rel* inverse_REL(Elf32_Rel* rel)
     return rel;
 }
 
+Elf32_Rela* inverse_RELA(Elf32_Rela* rela)
+{
+    rela->r_offset = reverse_4(rela->r_offset);
+    rela->r_info = reverse_4(rela->r_info);
+    rela->r_addend = reverse_4(rela->r_addend);
+    return rela;
+}
+
 //Les entrées REL et RELA sont séparées
 
 //Affiche les relations d'une entrée donée de type REL
@@ -250,12 +258,18 @@ int afficher_table_relations(Elf32_Shdr* reitab, elf_contexte_t* ctx)
     int nb_relations = reitab->sh_size / reitab->sh_entsize;
     if (type == SHT_RELA)
     {
+        Elf32_Rela* entree_rela = malloc(reitab->sh_size);
+        
+        fseek(ctx->file, reitab->sh_offset, SEEK_SET);
+        if (fread(entree_rela, reitab->sh_size, 1, ctx->file) != 1) {
+          printf("ERREUR fread RELA\n");
+          return -1;
+        }
+        
         printf("Offset   Info     Type             Sym.Value Sym.Name + Addend\n");
-        Elf32_Rela* entree_rela = malloc(sizeof(Elf32_Rela));
         for (int i = 0; i < nb_relations; i++)
         {
-            fread(entree_rela, sizeof(Elf32_Rela), 1, ctx->file);
-            afficher_relations_entree_RELA(entree_rela, reitab, ctx);
+            afficher_relations_entree_RELA(inverse_RELA(entree_rela + i), reitab, ctx);
         }
         free (entree_rela);
     }
@@ -265,7 +279,7 @@ int afficher_table_relations(Elf32_Shdr* reitab, elf_contexte_t* ctx)
         
         fseek(ctx->file, reitab->sh_offset, SEEK_SET);
         if (fread(entree_rel, reitab->sh_size, 1, ctx->file) != 1) {
-          printf("ERREUR fread REL.A\n");
+          printf("ERREUR fread REL\n");
           return -1;
         }
         
