@@ -59,13 +59,12 @@ int main(int argc, char *argv[]) {
 	else if (strcmp(commande, "-s") == 0) {
 	    elf_contexte_t ctx;
 	    memset(&ctx, 0, sizeof(ctx));
-	    ctx.fd = open(argv[1], O_RDONLY);
+	    ctx.file = f;
 	    lire_entete_elf(&ctx);
 	    lire_table_sections(&ctx);
 	    lire_noms_sections(&ctx);
 	    lire_table_symboles(&ctx);
 	    liberer_contexte(&ctx);
-	    close(ctx.fd);
 	}
 	else if (strcmp(commande, "-r") == 0) {
 	    printf("pas fait\n");
