@@ -8,46 +8,6 @@
 #define FIX16(x) (file_big_endian ? reverse_2(x) : (x))
 #define FIX32(x) (file_big_endian ? reverse_4(x) : (x))
 
-/* Print ELF header */
-void elf_header(FILE* f){
-
-    rewind(f);
-    Elf32_Ehdr hdr;
-    fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
-    int file_big_endian = (hdr.e_ident[EI_DATA] == ELFDATA2MSB);
-
-    printf("En-tête ELF:\n");
-    printf("Magique:   ");
-    for( int i = 0; i < EI_NIDENT; i++){
-        printf("%02x ", hdr.e_ident[i]);
-    }
-    printf("\n");
-
-    printf("Classe:   %s\n", (hdr.e_ident[EI_CLASS] == ELFCLASS32 ? "ELF32" : (hdr.e_ident[EI_CLASS] == ELFCLASS64 ? "ELF64" : "Inconnu")));
-    printf("Données:   %s\n", (hdr.e_ident[EI_DATA] == ELFDATA2LSB ? "Little Endian" : (hdr.e_ident[EI_DATA] == ELFDATA2MSB ? "Big Endian" : "Inconnu")));
-    printf("Version:   %d\n", hdr.e_ident[EI_VERSION]);
-    printf("OS/ABI:   %d\n", hdr.e_ident[EI_OSABI]);
-    printf("Version ABI:   %d\n", hdr.e_ident[EI_ABIVERSION]);
-
-    printf("Type:   0x%04x %s\n", FIX16(hdr.e_type), (FIX16(hdr.e_type) ==  ET_REL ? "REL (Fichier de réadressage)" : "Autres"));
-    printf("Machine:   0x%04x %s\n", FIX16(hdr.e_machine), (FIX16(hdr.e_machine) == EM_ARM ? "ARM" : "Autres"));
-    printf("Version:   0x%08x\n", FIX32(hdr.e_version));
-    printf("Adresse du point d'entrée:   0x%08x\n", FIX32(hdr.e_entry));
-
-    printf("Début des en-têtes de programme:   %u %s\n", FIX32(hdr.e_phoff), "(octets dans le fichier)");
-    printf("Début des en-têtes de section:   %u %s\n", FIX32(hdr.e_shoff), "(octets dans le fichier)");
-
-    printf("Flags:   0x%08x\n", FIX32(hdr.e_flags));
-
-    printf("Taille de cet en-tête: %u %s\n", FIX16(hdr.e_ehsize), "(octets)");
-    printf("Taille de l'en-tête du programme:   %u %s\n", FIX16(hdr.e_phentsize), "(octets)");
-    printf("Nombre d'en-tête du programme:   %u\n", FIX16(hdr.e_phnum));
-    printf("Taille des en-têtes de section:   %u %s\n", FIX16(hdr.e_shentsize), "(octets)");
-    printf("Nombre d'en-tête de section:   %u\n", FIX16(hdr.e_shnum));
-    printf("Table d'index des chaînes d'en-tête de section:   %u\n", FIX16(hdr.e_shstrndx));
-
-}
-
 void elf_section(FILE *f){
     
     rewind(f);
