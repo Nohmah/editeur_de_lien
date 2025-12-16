@@ -1,1 +1,52 @@
-Custom ELF Loader intended for pedagogic use
+
+##**Contexte :**
+Ce travail a été réalisé dans le cadre de la 3ᵉ année de licence Informatique générale à l’IM2AG,
+dans le cours Programmation et Projets, à réaliser en groupe de 6.
+
+
+##**Objectif :**
+Le but de ce projet est de pouvoir :
+
+- Afficher les différentes parties d’un fichier ELF :
+
+  - l’en-tête,
+  - la table des sections,
+  - le contenu d’une section,
+  - la table des symboles,
+  - la table de réimplantation.
+
+- Fusionner deux fichiers au format ELF en un troisième.
+
+
+##**Informations sur le format ELF utilisé :**
+Le format ELF (Executable and Linkable Format) est utilisé pour faciliter la compilation séparée.
+Il est possible d’en créer facilement avec le paramètre -c lors de la compilation (fichiers .o).
+
+Dans ce projet, nous nous limitons au format ELF 32 bits,
+ciblant une architecture ARM en big endian.
+Ce mode peut être forcé avec le paramètre -m32.
+
+
+##**Utilisation :**
+Pour utiliser le programme, exécuter la commande "make" dans le terminal.
+Puis lancer :
+./elf_reader (fichier ELF) (paramètre)
+
+Liste des paramètres disponibles : -h, -S, -s, -x, -r.
+
+
+##**Crédits :**
+Personnes ayant travaillé sur le projet :
+
+- Nathan Reynaud
+- Mohamed Nezhari
+- Thomas Sundman--Mathon
+- Maxime Testelin
+- Hamza Marzaq
+- Dorian Dumarché
+
+Enseignant ayant fourni des fichiers de base et des fonctions de debug :
+
+- Guillaume Huard
+
+
