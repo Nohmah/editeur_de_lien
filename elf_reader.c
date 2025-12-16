@@ -3,7 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "elf_header_and_section.h"
+#include "elf_header.h"
+#include "elf_section_table.h"
 #include "elf_symboles.h"
 
 void usage(char *programme) {
