@@ -1,10 +1,10 @@
 
-##**Contexte :**
+## Contexte :
 Ce travail a été réalisé dans le cadre de la 3ᵉ année de licence Informatique générale à l’IM2AG,
 dans le cours Programmation et Projets, à réaliser en groupe de 6.
 
 
-##**Objectif :**
+## Objectif :
 Le but de ce projet est de pouvoir :
 
 - Afficher les différentes parties d’un fichier ELF :
@@ -18,7 +18,7 @@ Le but de ce projet est de pouvoir :
 - Fusionner deux fichiers au format ELF en un troisième.
 
 
-##**Informations sur le format ELF utilisé :**
+## Informations sur le format ELF utilisé :
 Le format ELF (Executable and Linkable Format) est utilisé pour faciliter la compilation séparée.
 Il est possible d’en créer facilement avec le paramètre -c lors de la compilation (fichiers .o).
 
@@ -27,7 +27,7 @@ ciblant une architecture ARM en big endian.
 Ce mode peut être forcé avec le paramètre -m32.
 
 
-##**Utilisation :**
+## Utilisation :
 Pour utiliser le programme, exécuter la commande "make" dans le terminal.
 Puis lancer :
 ./elf_reader (fichier ELF) (paramètre)
@@ -35,7 +35,7 @@ Puis lancer :
 Liste des paramètres disponibles : -h, -S, -s, -x, -r.
 
 
-##**Crédits :**
+## Crédits :
 Personnes ayant travaillé sur le projet :
 
 - Nathan Reynaud
