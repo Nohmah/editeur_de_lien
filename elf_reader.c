@@ -8,6 +8,7 @@
 #include "elf_section_table.h"
 #include "elf_symboles.h"
 #include "elf_lecture_section.h"
+#include "elf_reimplantation.h"
 
 void usage(char *programme) {
     fprintf(stderr, "\nUsage:\n");
@@ -88,7 +89,14 @@ int main(int argc, char *argv[]) {
 	    liberer_contexte(&ctx);
 	}
 	else if (strcmp(commande, "-r") == 0) {
-	    printf("pas fait\n");
+	    elf_contexte_t ctx;
+	    memset(&ctx, 0, sizeof(ctx));
+	    ctx.file = f;
+	    lire_entete_elf(&ctx);
+	    lire_table_sections(&ctx);
+	    lire_noms_sections(&ctx);
+      	lire_sections_reimplantations(&ctx);
+      	liberer_contexte(&ctx);
 	}
 	else {
 	    fprintf(stderr, "Commande non reconnue: %s\n", commande);
