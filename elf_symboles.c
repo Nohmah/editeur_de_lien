@@ -3,26 +3,66 @@
 #include <string.h>
 #include <elf.h>
 
+#include "util.h"
 #include "elf_symboles.h"
+
+// inverse une en-tête 
+ void inverse_entete(Elf32_Ehdr *ehdr){
+    ehdr->e_type = reverse_2(ehdr->e_type);
+    ehdr->e_machine = reverse_2(ehdr->e_machine);
+    ehdr->e_version = reverse_4(ehdr->e_version);
+    ehdr->e_entry = reverse_4(ehdr->e_entry);
+    ehdr->e_phoff = reverse_4(ehdr->e_phoff);
+    ehdr->e_shoff = reverse_4(ehdr->e_shoff);
+    ehdr->e_flags = reverse_4(ehdr->e_flags);
+    ehdr->e_ehsize = reverse_2(ehdr->e_ehsize);
+    ehdr->e_phentsize = reverse_2(ehdr->e_phentsize);
+    ehdr->e_phnum = reverse_2(ehdr->e_phnum);
+    ehdr->e_shentsize = reverse_2(ehdr->e_shentsize);
+    ehdr->e_shnum = reverse_2(ehdr->e_shnum);
+    ehdr->e_shstrndx = reverse_2(ehdr->e_shstrndx);
+}
+
+void inverse_ONE_Section(Elf32_Shdr *sh){
+    sh->sh_name = reverse_4(sh->sh_name);
+    sh->sh_type = reverse_4(sh->sh_type);
+    sh->sh_addr = reverse_4(sh->sh_addr);
+    sh->sh_offset = reverse_4(sh->sh_offset);
+    sh->sh_size = reverse_4(sh->sh_size);
+    sh->sh_entsize = reverse_4(sh->sh_entsize);
+    sh->sh_flags = reverse_4(sh->sh_flags);
+    sh->sh_link = reverse_4(sh->sh_link);
+    sh->sh_info = reverse_4(sh->sh_info);
+    sh->sh_addralign = reverse_4(sh->sh_addralign);
+}
+
+void inverse_Section(Elf32_Shdr *Tabsh, int n){
+    for(int i = 0; i < n ; i++){
+        inverse_ONE_Section(Tabsh + i);
+    }
+}
 
 // Lecture de l’en-tête ELF
 int lire_entete_elf(elf_contexte_t *ctx)
 {
     fseek(ctx->file, 0, SEEK_SET);
 
-    if (fread(&ctx->ehdr, sizeof(Elf32_Ehdr), 1, ctx->file) != 1) {
+
+    if (fread(&(ctx->ehdr), sizeof(Elf32_Ehdr), 1, ctx->file) != 1) {
         perror("fread entete");
         return -1;
     }
 
+    inverse_entete(&(ctx->ehdr));
+
     // Vérification ELF
-    if (ctx->ehdr.e_ident[EI_MAG0] != ELFMAG0 ||
+    /*if (ctx->ehdr.e_ident[EI_MAG0] != ELFMAG0 ||
         ctx->ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
         ctx->ehdr.e_ident[EI_MAG2] != ELFMAG2 ||
         ctx->ehdr.e_ident[EI_MAG3] != ELFMAG3) {
         fprintf(stderr, "Pas un fichier ELF\n");
         return -1;
-    }
+    }*/
 
     return 0;
 }
@@ -44,6 +84,8 @@ int lire_table_sections(elf_contexte_t *ctx)
         perror("fread sections");
         return -1;
     }
+
+    inverse_Section(ctx->sections, ctx->ehdr.e_shnum);
 
     return 0;
 }
@@ -79,12 +121,17 @@ int lire_noms_sections(elf_contexte_t *ctx)
 // Recherche d’une section par son nom
 int trouver_section(const elf_contexte_t *ctx, const char *nom)
 {
+    //printf("Entrer dans trouver_section\n");
+    //printf("section rechercher : %s \n",nom);
+    char *nom_courant;
     for (int i = 0; i < ctx->ehdr.e_shnum; i++) {
-        const char *nom_courant =
-            ctx->noms_sections + ctx->sections[i].sh_name;
+        nom_courant = ctx->noms_sections + ctx->sections[i].sh_name;
+        //printf("section %d = %s \n",i,nom_courant);
 
-        if (strcmp(nom_courant, nom) == 0)
+        if (strcmp(nom_courant, nom) == 0){
+            //printf("TROUVER !!\n");
             return i;
+        }
     }
 
     return -1;
@@ -128,10 +175,18 @@ int lire_table_symboles(elf_contexte_t *ctx)
 
     printf("Index  Valeur    Type     Portée   Section  Nom\n");
 
+    char *nom; 
     for (int i = 0; i < ctx->nb_symboles; i++) {
-        const char *nom =
-            ctx->noms_symboles + ctx->symboles[i].st_name;
-
+        nom = ctx->noms_sections + ctx->sections[i].sh_name;
+        //nom = ctx->noms_symboles + ctx->symboles[i].st_name;
+/*
+        printf("\n1%5d \n\n\n",i);
+        printf("2%08x \n",ctx->symboles[i].st_value);
+        printf("3%-8s \n",type_symbole(ctx->symboles[i].st_info));
+        printf("4%-8s \n",portee_symbole(ctx->symboles[i].st_info));
+        printf("5%7d \n",ctx->symboles[i].st_shndx);
+        printf("6%s \n",nom);
+*/
         printf("%5d  %08x %-8s %-8s %7d  %s\n",
                i,
                ctx->symboles[i].st_value,
