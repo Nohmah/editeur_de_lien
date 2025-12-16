@@ -1,11 +1,17 @@
-#include <elf_symboles.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <elf.h>
+#include "elf_symboles.h"
 
-//////////////////////////////////////////
-// A MODIFIER ATTENTION //
+///////////////////////////////////////////
+////////////// A FAIRE !!! ///////////////
 /*
-- TROUVER LE DEBUT DE LA TABLE
+- Tester si ça marche (probablement que non mdr)
+- Unifier la recherche de table des symboles avec la table des symboles
 */
-///////////////////////////////////
+///////////////////////////////////////////
+
+//Les entrées REL et RELA sont séparées
 
 //Affiche les relations d'une entrée donée de type REL
 void afficher_relations_entree_REL(Elf32_Rel* entree_rel)
@@ -38,7 +44,14 @@ void afficher_relations_entree_REL(Elf32_Rel* entree_rel)
 
     //Sym. value, sym. name : utiliser table des symboles
     //On extrait l'index de table des symboles, et on l'associe à la table des symboles
-    unsigned char sym_c = (unsigned char)ELF32_R_SYM(entree_rel->r_info);
+    int sym_c = (int)ELF32_R_SYM(entree_rel->r_info);
+    elf_contexte_t *ctx = malloc(sizeof(elf_contexte_t));
+    printf("%lu ", valeur_symbole(ctx, sym_c));
+    printf("%s ", nom_symbole(ctx, sym_c));
+    free(ctx);
+
+    //Pas d'addend pour REL
+    printf("XX\n");
 }
 
 
@@ -73,30 +86,43 @@ void afficher_relations_entree_RELA(Elf32_Rela* entree_rela)
 
     //Sym. value, sym. name : utiliser table des symboles
     //On extrait l'index de table des symboles, et on l'associe à la table des symboles
-    unsigned char sym_c = (unsigned char)ELF32_R_SYM(entree_rela->r_info);
+    int sym_c = (int)ELF32_R_SYM(entree_rela->r_info);
+    elf_contexte_t *ctx = malloc(sizeof(elf_contexte_t));
+    printf("%lu ", valeur_symbole(ctx, sym_c));
+    printf("%s ", nom_symbole(ctx, sym_c));
+    free(ctx);
 
-
-    printf("%ld\n", (signed long)entree_rela->r_addend);
+    //Addend
+    signed long addend = (signed long)entree_rela->r_addend;
+    if (addend > 0) printf("+ %ld\n", addend);
+    else printf("- %ld\n", -addend);
 }
 
 //Itere sur une table de reimplantations, et affiche toutes les entrees
-void afficher_table_relations(Elf32_Shdr* reitab)
+void afficher_table_relations(Elf32_Shdr* reitab, FILE* f)
 {
     Elf32_Word type = reitab->sh_type;
-    nb_relations = reitab->sh_size / reitab->sh_entsize;
+    int nb_relations = reitab->sh_size / reitab->sh_entsize;
+    fseek(f, reitab->sh_offset, SEEK_SET);
     printf("Offset Info Type Sym.Value Sym.Name + Addend\n");
     if (type == SHT_RELA)
     {
+        Elf32_Rela* entree_rela = malloc(sizeof(Elf32_Rela));
         for (int i = 0; i < nb_relations; i++)
         {
-            afficher_relations_entree_RELA(reitab->sh_link + i);
+            fread(entree_rela, sizeof(Elf32_Rela), 1, f);
+            afficher_relations_entree_RELA(entree_rela);
         }
+        free (entree_rela);
     }
     else
     {
+        Elf32_Rel* entree_rel = malloc(sizeof(Elf32_Rel));
         for (int i = 0; i < nb_relations; i++)
         {
-            afficher_relations_entree_REL(reitab->sh_link + i);
+            fread(entree_rel, sizeof(Elf32_Rel), 1, f);
+            afficher_relations_entree_REL(entree_rel);
         }
+        free (entree_rel);
     }
 }
