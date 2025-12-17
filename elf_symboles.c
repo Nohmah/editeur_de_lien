@@ -146,8 +146,8 @@ int trouver_section(const elf_contexte_t *ctx, const char *nom)
     return -1;
 }
 
-// Lecture et affichage de la table des symboles
-int lire_table_symboles(elf_contexte_t *ctx)
+// Chargement de la table des symboles
+int charger_table_symboles(elf_contexte_t *ctx)
 {
     int idx_symtab = trouver_section(ctx, ".symtab");
     int idx_strtab = trouver_section(ctx, ".strtab");
@@ -183,7 +183,20 @@ int lire_table_symboles(elf_contexte_t *ctx)
         perror("fread noms symboles");
         return -1;
     }
+    
+    return 0;
+}
 
+// Lecture et affichage de la table des symboles
+int lire_table_symboles(elf_contexte_t *ctx)
+{
+    //Si la table n'est pas chargée, la charger
+    int chargement_err = 0;
+    if (ctx->nb_symboles == 0){
+        chargement_err = charger_table_symboles(ctx);
+        if (chargement_err == -1) return -1;
+    }
+    
     printf("Index  Valeur    Type     Portée   Section  Nom\n");
 
     char *nom = ctx->noms_symboles; 
