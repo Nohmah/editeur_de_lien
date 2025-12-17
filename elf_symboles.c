@@ -42,6 +42,19 @@ void inverse_Section(Elf32_Shdr *Tabsh, int n){
     }
 }
 
+void inverse_ONE_Sym(Elf32_Sym *s){
+    s->st_name  = reverse_4(s->st_name);
+    s->st_value = reverse_4(s->st_value);
+    s->st_size  = reverse_4(s->st_size);
+    s->st_shndx = reverse_2(s->st_shndx);
+}
+
+void inverse_Sym(Elf32_Sym *Tabs, int n){
+    for(int i = 0; i < n ; i++){
+        inverse_ONE_Sym(Tabs + i);
+    }
+}
+
 // Lecture de l’en-tête ELF
 int lire_entete_elf(elf_contexte_t *ctx)
 {
@@ -121,15 +134,11 @@ int lire_noms_sections(elf_contexte_t *ctx)
 // Recherche d’une section par son nom
 int trouver_section(const elf_contexte_t *ctx, const char *nom)
 {
-    //printf("Entrer dans trouver_section\n");
-    //printf("section rechercher : %s \n",nom);
     char *nom_courant;
     for (int i = 0; i < ctx->ehdr.e_shnum; i++) {
         nom_courant = ctx->noms_sections + ctx->sections[i].sh_name;
-        //printf("section %d = %s \n",i,nom_courant);
 
         if (strcmp(nom_courant, nom) == 0){
-            //printf("TROUVER !!\n");
             return i;
         }
     }
@@ -167,6 +176,8 @@ int lire_table_symboles(elf_contexte_t *ctx)
         return -1;
     }
 
+    inverse_Sym(ctx->symboles, ctx->nb_symboles);
+
     fseek(ctx->file, strtab->sh_offset, SEEK_SET);
     if (fread(ctx->noms_symboles, strtab->sh_size, 1, ctx->file) != 1) {
         perror("fread noms symboles");
@@ -175,18 +186,18 @@ int lire_table_symboles(elf_contexte_t *ctx)
 
     printf("Index  Valeur    Type     Portée   Section  Nom\n");
 
-    char *nom; 
+    char *nom = ctx->noms_symboles; 
+    printf("TEST Nom :\n");
+
     for (int i = 0; i < ctx->nb_symboles; i++) {
-        nom = ctx->noms_sections + ctx->sections[i].sh_name;
-        //nom = ctx->noms_symboles + ctx->symboles[i].st_name;
-/*
-        printf("\n1%5d \n\n\n",i);
-        printf("2%08x \n",ctx->symboles[i].st_value);
-        printf("3%-8s \n",type_symbole(ctx->symboles[i].st_info));
-        printf("4%-8s \n",portee_symbole(ctx->symboles[i].st_info));
-        printf("5%7d \n",ctx->symboles[i].st_shndx);
-        printf("6%s \n",nom);
-*/
+
+        if (ELF32_ST_TYPE(ctx->symboles[i].st_info) == STT_SECTION) {
+            nom = ctx->noms_sections + ctx->sections[ctx->symboles[i].st_shndx].sh_name;
+        } else if (ctx->symboles[i].st_name != 0) {
+            nom = ctx->noms_symboles + ctx->symboles[i].st_name;
+            } else {
+                nom = "";
+            }
         printf("%5d  %08x %-8s %-8s %7d  %s\n",
                i,
                ctx->symboles[i].st_value,
