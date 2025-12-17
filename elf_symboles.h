@@ -25,6 +25,9 @@ int lire_noms_sections(elf_contexte_t *ctx);
 /* Recherche d’une section par son nom */
 int trouver_section(const elf_contexte_t *ctx, const char *nom);
 
+/* Chargement de la table des symboles dans ctx */
+int charger_table_symboles(elf_contexte_t *ctx);
+
 /* Lecture et affichage de la table des symboles */
 int lire_table_symboles(elf_contexte_t *ctx);
 
