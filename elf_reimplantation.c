@@ -6,14 +6,6 @@
 #include "elf_reimplantation.h"
 #include "util.h"
 
-///////////////////////////////////////////
-////////////// A FAIRE !!! ///////////////
-/*
-- Acceder à la table des symboles
-- Crier de joie ?
-*/
-///////////////////////////////////////////
-
 //PITIE DITES MOI QU'IL EXISTE UNE FONCTION POUR CA
 //J'ai l'impression d'être puni et de copier des lignes
 char* type_to_string(int type, char* str)
@@ -252,10 +244,11 @@ void afficher_relations_entree_RELA(Elf32_Rela* entree_rela, Elf32_Shdr* reitab,
 }
 
 //Itere sur une table de reimplantations, et affiche toutes les entrees
-int afficher_table_relations(Elf32_Shdr* reitab, elf_contexte_t* ctx)
+int afficher_table_relations(Elf32_Shdr* reitab, elf_contexte_t* ctx, char* reitab_name)
 {
     Elf32_Word type = reitab->sh_type;
     int nb_relations = reitab->sh_size / reitab->sh_entsize;
+    printf("Section de readressage %s à l'adresse offset 0x%x contient %d entrées : \n", reitab_name, reitab->sh_offset, nb_relations);
     if (type == SHT_RELA)
     {
         Elf32_Rela* entree_rela = malloc(reitab->sh_size);
@@ -296,7 +289,15 @@ int afficher_table_relations(Elf32_Shdr* reitab, elf_contexte_t* ctx)
 
 int lire_sections_reimplantations(elf_contexte_t* ctx)
 {
-  int idx_reitab = trouver_section(ctx, ".rel.text");
+  int chargement_err = 0;
+    if (ctx->nb_symboles == 0){
+        chargement_err = charger_table_symboles(ctx);
+        if (chargement_err == -1) return -1;
+    }
+  
+  char reitab_name[32];
+  strcpy(reitab_name, ".rel.text");
+  int idx_reitab = trouver_section(ctx, reitab_name);
 
   if (idx_reitab == -1) {
     fprintf(stderr, "Table des reimplantations non trouvée \n");
@@ -304,6 +305,6 @@ int lire_sections_reimplantations(elf_contexte_t* ctx)
   }
 
   Elf32_Shdr *reitab = &ctx->sections[idx_reitab];
-  afficher_table_relations(reitab, ctx);
+  afficher_table_relations(reitab, ctx, reitab_name);
   return 0;
 }
