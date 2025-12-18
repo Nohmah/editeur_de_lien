@@ -31,10 +31,10 @@ void elf_section(FILE *f){
     fseek(f, off, SEEK_SET);
     fread(shstrtab, 1, size, f);
 
-    printf("\nIl y a %d en-têtes de section, débutant à l'adresse 0x%x\n\n",
-           shnum, shoff);
+    printf("\nThere are %d section headers, starting at offset 0x%x:\n\n", shnum, shoff);
 
-    printf("[Nr] Nom               Type       Adr      Off    Taille ES Fan Ln Inf Al\n");
+    printf("Section Headers:\n");
+    printf("[Nr] Name               Type           Addr     Off    Size   ES Flg Lk Inf Al\n");
 
     for (int i = 0; i < shnum; i++) {
         Elf32_Shdr *sh = &sections[i];
@@ -51,7 +51,7 @@ void elf_section(FILE *f){
         uint32_t info  = reverse_4(sh->sh_info);
         uint32_t al    = reverse_4(sh->sh_addralign);
 
-        printf("[%2d] %-17s %-10s %08x %06x %06x %02x ",
+        printf("[%2d] %-18s %-14s %08x %06x %06x %02x ",
                i, name, sh_type_str(type),
                addr, off, size, es);
 
@@ -79,7 +79,7 @@ const char *sh_type_str(uint32_t type)
         case SHT_REL:           return "REL";
         case SHT_SHLIB:         return "SHLIB";
         case SHT_DYNSYM:        return "DYNSYM";
-        case SHT_ARM_ATTRIBUTES:return "ARM_ATTR";
+        case SHT_ARM_ATTRIBUTES:return "ARM_ATTRIBUTES";
         default:                return "UNKNOWN";
     }
 }
