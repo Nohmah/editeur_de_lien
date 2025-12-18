@@ -5,6 +5,7 @@
 #include "elf_symboles.h"
 #include "elf_reimplantation.h"
 #include "util.h"
+#include "fonc_inversion.h"
 
 //PITIE DITES MOI QU'IL EXISTE UNE FONCTION POUR CA
 //J'ai l'impression d'être puni et de copier des lignes
@@ -173,21 +174,6 @@ char* type_to_string(int type, char* str)
             strcpy(type_s, "ERREUR_TYPE");
     }*/
 
-//Pour corriger l'inversement
-Elf32_Rel* inverse_REL(Elf32_Rel* rel)
-{
-    rel->r_offset = reverse_4(rel->r_offset);
-    rel->r_info = reverse_4(rel->r_info);
-    return rel;
-}
-
-Elf32_Rela* inverse_RELA(Elf32_Rela* rela)
-{
-    rela->r_offset = reverse_4(rela->r_offset);
-    rela->r_info = reverse_4(rela->r_info);
-    rela->r_addend = reverse_4(rela->r_addend);
-    return rela;
-}
 
 //Les entrées REL et RELA sont séparées
 

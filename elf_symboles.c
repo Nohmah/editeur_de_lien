@@ -3,57 +3,9 @@
 #include <string.h>
 #include <elf.h>
 
-#include "util.h"
+#include "fonc_inversion.h"
 #include "elf_symboles.h"
 
-// inverse une en-tête 
- void inverse_entete(Elf32_Ehdr *ehdr){
-    ehdr->e_type = reverse_2(ehdr->e_type);
-    ehdr->e_machine = reverse_2(ehdr->e_machine);
-    ehdr->e_version = reverse_4(ehdr->e_version);
-    ehdr->e_entry = reverse_4(ehdr->e_entry);
-    ehdr->e_phoff = reverse_4(ehdr->e_phoff);
-    ehdr->e_shoff = reverse_4(ehdr->e_shoff);
-    ehdr->e_flags = reverse_4(ehdr->e_flags);
-    ehdr->e_ehsize = reverse_2(ehdr->e_ehsize);
-    ehdr->e_phentsize = reverse_2(ehdr->e_phentsize);
-    ehdr->e_phnum = reverse_2(ehdr->e_phnum);
-    ehdr->e_shentsize = reverse_2(ehdr->e_shentsize);
-    ehdr->e_shnum = reverse_2(ehdr->e_shnum);
-    ehdr->e_shstrndx = reverse_2(ehdr->e_shstrndx);
-}
-
-void inverse_ONE_Section(Elf32_Shdr *sh){
-    sh->sh_name = reverse_4(sh->sh_name);
-    sh->sh_type = reverse_4(sh->sh_type);
-    sh->sh_addr = reverse_4(sh->sh_addr);
-    sh->sh_offset = reverse_4(sh->sh_offset);
-    sh->sh_size = reverse_4(sh->sh_size);
-    sh->sh_entsize = reverse_4(sh->sh_entsize);
-    sh->sh_flags = reverse_4(sh->sh_flags);
-    sh->sh_link = reverse_4(sh->sh_link);
-    sh->sh_info = reverse_4(sh->sh_info);
-    sh->sh_addralign = reverse_4(sh->sh_addralign);
-}
-
-void inverse_Section(Elf32_Shdr *Tabsh, int n){
-    for(int i = 0; i < n ; i++){
-        inverse_ONE_Section(Tabsh + i);
-    }
-}
-
-void inverse_ONE_Sym(Elf32_Sym *s){
-    s->st_name  = reverse_4(s->st_name);
-    s->st_value = reverse_4(s->st_value);
-    s->st_size  = reverse_4(s->st_size);
-    s->st_shndx = reverse_2(s->st_shndx);
-}
-
-void inverse_Sym(Elf32_Sym *Tabs, int n){
-    for(int i = 0; i < n ; i++){
-        inverse_ONE_Sym(Tabs + i);
-    }
-}
 
 // Lecture de l’en-tête ELF
 int lire_entete_elf(elf_contexte_t *ctx)
@@ -62,20 +14,13 @@ int lire_entete_elf(elf_contexte_t *ctx)
 
 
     if (fread(&(ctx->ehdr), sizeof(Elf32_Ehdr), 1, ctx->file) != 1) {
-        perror("fread entete");
+        perror("ERROR fread entete");
         return -1;
     }
 
     inverse_entete(&(ctx->ehdr));
 
-    // Vérification ELF
-    /*if (ctx->ehdr.e_ident[EI_MAG0] != ELFMAG0 ||
-        ctx->ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
-        ctx->ehdr.e_ident[EI_MAG2] != ELFMAG2 ||
-        ctx->ehdr.e_ident[EI_MAG3] != ELFMAG3) {
-        fprintf(stderr, "Pas un fichier ELF\n");
-        return -1;
-    }*/
+    // Vérification ELF déjà faite
 
     return 0;
 }
@@ -199,8 +144,7 @@ int lire_table_symboles(elf_contexte_t *ctx)
     
     printf("Index  Valeur    Type     Portée   Section  Nom\n");
 
-    char *nom = ctx->noms_symboles; 
-    printf("TEST Nom :\n");
+    char *nom; 
 
     for (int i = 0; i < ctx->nb_symboles; i++) {
 
@@ -211,6 +155,7 @@ int lire_table_symboles(elf_contexte_t *ctx)
             } else {
                 nom = "";
             }
+        
         printf("%5d  %08x %-8s %-8s %7d  %s\n",
                i,
                ctx->symboles[i].st_value,
