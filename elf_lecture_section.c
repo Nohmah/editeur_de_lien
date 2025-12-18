@@ -110,11 +110,11 @@ int elf_lecture_section(FILE* f, char *section) {
             if (i + j < size) {
                 printf("%02x", buffer[i + j]);
             } else {
-                printf("   ");  // Remplissage pour alignement
+                printf("  ");  // Remplissage pour alignement
             }
         }
         
-        printf("  ");  // 2 espaces avant la partie ASCII
+        printf(" ");  // 2 espaces avant la partie ASCII
         
         for (int j = 0; j < 16 && i + j < size; j++) {
             unsigned char c = buffer[i + j];
