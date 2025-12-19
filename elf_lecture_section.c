@@ -45,11 +45,9 @@ int elf_lecture_section(FILE* f, char *section) {
         
         for (int i = 0; i < shnum; i++) {
             uint32_t name_offset = reverse_4(sections[i].sh_name);
-            if (name_offset < size) {
-                if (strcmp(shstrtab + name_offset, section) == 0){
-                    section_index = i;
-                    break;
-                }
+            if (strcmp(shstrtab + name_offset, section) == 0){
+                section_index = i;
+                break;
             }
         }
         free(shstrtab);
@@ -60,57 +58,49 @@ int elf_lecture_section(FILE* f, char *section) {
         }
     }
     
-    // Infos de la section trouvée
+    // Infos sur la section trouvée
     Elf32_Shdr target = sections[section_index];
     uint32_t offset = reverse_4(target.sh_offset);
     uint32_t size = reverse_4(target.sh_size);
     
-    // Obtenir le nom réel de la section
+    // Nom de la section voulue
     char section_name[256] = "";
     if (shstrndx < shnum) {
         uint32_t shstrtab_offset = reverse_4(sections[shstrndx].sh_offset);
-        uint32_t shstrtab_size = reverse_4(sections[shstrndx].sh_size);
         uint32_t name_offset = reverse_4(target.sh_name);
-        
-        if (name_offset < shstrtab_size) {
-            fseek(f, shstrtab_offset + name_offset, SEEK_SET);
-            // Lire jusqu'au premier null
-            for (int i = 0; i < sizeof(section_name) - 1; i++) {
-                char c;
-                if (fread(&c, 1, 1, f) != 1 || c == '\0') break;
-                section_name[i] = c;
-            }
+        fseek(f, shstrtab_offset + name_offset, SEEK_SET);
+        for (int i = 0; i < sizeof(section_name) - 1; i++) {
+            char c;
+            if (fread(&c, 1, 1, f) != 1 || c == '\0') break;
+            section_name[i] = c;
         }
     }
     
-    // Afficher l'en-tête comme readelf
-    const char *display_name = (strlen(section_name) > 0) ? section_name : section;
-    printf("\nContenu hexadecimal de la section '%s':\n", display_name);
+    // Affichage de l'en-tête
+    printf("\nContenu hexadecimal de la section '%s':\n", section_name);
     
-    // Vérifier si la section n'est pas vide
     if (size == 0) {
-        printf("  Section vide\n");
+        printf("Section vide\n");
         free(sections);
         return 0;
     }
     
-    // Lire le contenu de la section
+    // Lecture du contenu
     fseek(f, offset, SEEK_SET);
     unsigned char *buffer = malloc(size);
     fread(buffer, 1, size, f);
     
-    // Affichage hexdump (exactement comme readelf)
+    // Ecriture du contenu
     for (uint32_t i = 0; i < size; i += 16) {
-        printf("  0x%08x ", i);  // Format: espace, 8 chiffres hexa, espace
+        printf("  0x%08x ", i);
         
-        // 16 octets hexa par ligne
         for (int j = 0; j < 16; j++) {
-            if (j == 4 || j == 8 || j == 12) printf(" ");  // Espace au milieu (après 8 octets)
+            if (j == 4 || j == 8 || j == 12) printf(" ");
             
             if (i + j < size) {
                 printf("%02x", buffer[i + j]);
             } else {
-                printf("  ");  // Remplissage pour alignement
+                printf("  ");
             }
         }
         
@@ -122,8 +112,7 @@ int elf_lecture_section(FILE* f, char *section) {
         }
         printf("\n");
     }
-    
-    // Nettoyage
+
     free(buffer);
     free(sections);
     
