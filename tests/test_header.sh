@@ -7,6 +7,7 @@ EXAMPLES_DIR=Examples_fusion
 RED='\033[48;5;1m'
 GREEN='\033[48;5;2m'
 NC='\033[0m'
+ERREUR=0
 
 normalize_hex() {
     printf "0x%x" "$(( $1 ))"
@@ -21,6 +22,7 @@ check() {
         echo -e "  $label : ${GREEN}OK${NC}"
     else
         echo -e "  $label : ${RED}FAIL${NC} ($got ≠ $exp)"
+        ERREUR=1
     fi
 }
 
@@ -129,3 +131,5 @@ for f in "$EXAMPLES_DIR"/exemple*.o; do
 
     echo
 done
+
+exit $ERREUR

@@ -14,3 +14,6 @@ fonc_inversion.o: fonc_inversion.c fonc_inversion.h
 
 clean:
 	rm -f *.o elf_reader
+
+test:
+	@ERREUR=0; for script in tests/*.sh; do "$$script" || ERREUR=1; done; if [ $$ERREUR -eq 1 ]; then echo "IL Y A AU MOINS UN TEST FAUX"; else echo "TOUS LES TESTS SONT JUSTES"; fi

@@ -11,6 +11,8 @@ if [ ! -f "$PROGRAM" ] || [ ! -d "$DIR" ]; then
     exit 1
 fi
 
+ERREUR=0
+
 for ELF_FILE in "$DIR"/*.o; do	
 	if [ ! -f "$ELF_FILE" ]; then
         echo "❌ ERREUR: Aucun fichier .o trouvé dans $DIR"
@@ -39,10 +41,11 @@ for ELF_FILE in "$DIR"/*.o; do
 		# Résultat final
 		if [ "$DATA_TEST" = "$DATA_ATTENDU" ]; then
 		    printf "%-30s %-30s %s\n" "FICHIER $NOM_FICHIER" "SECTION $SECTION" "correcte"
-		    continue
 		else
 		    printf "%-30s %-30s %s\n" "FICHIER $NOM_FICHIER" "SECTION $SECTION" "INCORRECT"
-		    exit 1
+		    ERREUR=1
 		fi
 	done
 done
+
+exit $ERREUR
