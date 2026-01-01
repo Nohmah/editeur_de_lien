@@ -1,8 +1,8 @@
 #!/bin/bash
 
-ELF_READER=../elf_reader
+ELF_READER=./elf_reader
 READELF=arm-none-eabi-readelf
-EXAMPLES_DIR=../Examples_fusion
+EXAMPLES_DIR=Examples_fusion
 
 RED='\033[48;5;1m'
 GREEN='\033[48;5;2m'
