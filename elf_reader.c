@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 		}
 		exit(1);
 	}
-	if (!check_spec(f)){
+	if (!verifier_fichier(f)){
 	    fprintf(stderr, "Ce programme ne supporte que les fichiers ELF 32 bits ARM big endian.\n");
 	    exit(1);
 	}
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 	commande = argv[2];
 
 	if (strcmp(commande, "-h") == 0) {
-    	elf_header(f);
+    	afficher_entete();
 	}
 	else if (strcmp(commande, "-S") == 0) {
 	    elf_section(f);
