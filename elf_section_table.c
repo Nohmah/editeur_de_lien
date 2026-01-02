@@ -6,11 +6,15 @@
 #include "util.h"
 
 void elf_section(FILE *f){
+    
+    rewind(f);
+    Elf32_Ehdr hdr;
+    fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
 
-    uint32_t shoff     = header.data.e_shoff;
-    uint16_t shnum     = header.data.e_shnum;    
-    uint16_t shentsize = header.data.e_shentsize;
-    uint16_t shstrndx  = header.data.e_shstrndx;
+    uint32_t shoff     = reverse_4(hdr.e_shoff);
+    uint16_t shnum     = reverse_2(hdr.e_shnum);
+    uint16_t shentsize = reverse_2(hdr.e_shentsize);
+    uint16_t shstrndx  = reverse_2(hdr.e_shstrndx);
 
     Elf32_Shdr *sections = malloc(shnum * sizeof(Elf32_Shdr));
 
