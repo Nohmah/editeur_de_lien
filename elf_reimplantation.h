@@ -5,13 +5,47 @@
 #include <stdio.h>
 #include "elf_symboles.h"
 
-/* Cherche les sections de reimplantations, et les affiche */
-int lire_sections_reimplantations(elf_contexte_t* ctx);
+/* Structs pour stocker la table de reimplantations*/
+typedef struct {
+  int offset;
+  int info;
+  char* type;
+  int valeur;
+  char* nom;
+} elf_entree_REL;
 
-char* type_to_string(int type, char* str);
+typedef struct {
+  elf_entree_REL *entrees;
+  int nb_entrees;
+  char* nom;
+  int offset;
+} elf_tableau_REL;
 
-/*fonction pour afficher*/
-void afficher_relations_entree_REL(Elf32_Rel* entree_rel, Elf32_Shdr* reitab, elf_contexte_t* ctx);
-void afficher_relations_entree_RELA(Elf32_Rela* entree_rela, Elf32_Shdr* reitab, elf_contexte_t* ctx);
-int afficher_table_relations(Elf32_Shdr* reitab, elf_contexte_t* ctx, char* reitab_name);
+typedef struct {
+  int offset;
+  int info;
+  char* type;
+  int valeur;
+  char* nom;
+  int addend;
+} elf_entree_RELA;
+
+typedef struct {
+  elf_entree_RELA *entrees;
+  int nb_entrees;
+  char* nom;
+  int offset;
+} elf_tableau_RELA;
+
+typedef struct {
+    elf_tableau_REL* tableaux_REL;
+    elf_tableau_RELA* tableaux_RELA;
+    int nb_REL;
+    int nb_RELA;
+} elf_tables_reimplantations;
+
+/* Charger et affcicher les tables de réimplantations */
+elf_tables_reimplantations* charger_tables_reimplantations(elf_contexte_t* ctx);
+int afficher_tables_reimplantations(elf_tables_reimplantations* tables);
+
 #endif

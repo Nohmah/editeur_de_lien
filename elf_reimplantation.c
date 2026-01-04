@@ -7,8 +7,8 @@
 #include "util.h"
 #include "fonc_inversion.h"
 
-//PITIE DITES MOI QU'IL EXISTE UNE FONCTION POUR CA
-//J'ai l'impression d'être puni et de copier des lignes
+// A MODIFIER : Le chargement une fois que j'aurai la struct des sections
+
 char* type_to_string(int type, char* str)
 {
     switch(type)
@@ -45,109 +45,6 @@ char* type_to_string(int type, char* str)
     case 30: strcpy(str, "R_ARM_THM_JUMP24"); break;
     case 31: strcpy(str, "R_ARM_BASE_ABS"); break;
     case 32: strcpy(str, "R_ARM_ALU_PCREL_7_0"); break;
-    case 33: strcpy(str, "R_ARM_ALU_PCREL_15_8"); break;
-    case 34: strcpy(str, "R_ARM_ALU_PCREL_23_15"); break;
-    case 35: strcpy(str, "R_ARM_LDR_SBREL_11_0_NC"); break;
-    case 36: strcpy(str, "R_ARM_ALU_SBREL_19_12_NC"); break;
-    case 37: strcpy(str, "R_ARM_ALU_SBREL_27_20_CK"); break;
-    case 38: strcpy(str, "R_ARM_TARGET1"); break;
-    case 39: strcpy(str, "R_ARM_SBREL31"); break;
-    case 40: strcpy(str, "R_ARM_V4BX"); break;
-    case 41: strcpy(str, "R_ARM_TARGET2"); break;
-    case 42: strcpy(str, "R_ARM_PREL31"); break;
-    case 43: strcpy(str, "R_ARM_MOVW_ABS_NC"); break;
-    case 44: strcpy(str, "R_ARM_MOVT_ABS"); break;
-    case 45: strcpy(str, "R_ARM_MOVW_PREL_NC"); break;
-    case 46: strcpy(str, "R_ARM_MOVT_PREL"); break;
-    case 47: strcpy(str, "R_ARM_THM_MOVW_ABS_NC"); break;
-    case 48: strcpy(str, "R_ARM_THM_MOVT_ABS"); break;
-    case 49: strcpy(str, "R_ARM_THM_MOVW_PREL_NC"); break;
-    case 50: strcpy(str, "R_ARM_THM_MOVT_PREL"); break;
-    case 51: strcpy(str, "R_ARM_THM_JUMP19"); break;
-    case 52: strcpy(str, "R_ARM_THM_JUMP6"); break;
-    case 53: strcpy(str, "R_ARM_THM_ALU_PREL_11_0"); break;
-    case 54: strcpy(str, "R_ARM_THM_PC12"); break; break;
-    case 55: strcpy(str, "R_ARM_ABS32_NOI"); break;
-    case 56: strcpy(str, "R_ARM_REL32_NOI"); break;
-    case 57: strcpy(str, "R_ARM_ALU_PC_G0_NC"); break;
-    case 58: strcpy(str, "R_ARM_ALU_PC_G0"); break;
-    case 59: strcpy(str, "R_ARM_ALU_PC_G1_NC"); break;
-    case 60: strcpy(str, "R_ARM_ALU_PC_G1"); break;
-    case 61: strcpy(str, "R_ARM_ALU_PC_G2"); break;
-    case 62: strcpy(str, "R_ARM_LDR_PC_G1"); break;
-    case 63: strcpy(str, "R_ARM_LDR_PC_G2"); break;
-    case 64: strcpy(str, "R_ARM_LDRS_PC_G0"); break;
-    case 65: strcpy(str, "R_ARM_LDRS_PC_G1"); break;
-    case 66: strcpy(str, "R_ARM_LDRS_PC_G2"); break;
-    case 67: strcpy(str, "R_ARM_LDC_PC_G0"); break;
-    case 68: strcpy(str, "R_ARM_LDC_PC_G1"); break;
-    case 69: strcpy(str, "R_ARM_LDC_PC_G2"); break;
-    case 70: strcpy(str, "R_ARM_ALU_SB_G0"); break;
-    case 71: strcpy(str, "R_ARM_ALU_SB_G0"); break;
-    case 72: strcpy(str, "R_ARM_ALU_SB_G1_NC"); break;
-    case 73: strcpy(str, "R_ARM_ALU_SB_G1"); break;
-    case 74: strcpy(str, "R_ARM_ALU_SB_G2"); break;
-    case 75: strcpy(str, "R_ARM_LDR_SB_G0"); break;
-    case 76: strcpy(str, "R_ARM_LDR_SB_G1"); break;
-    case 77: strcpy(str, "R_ARM_LDR_SB_G2"); break;
-    case 78: strcpy(str, "R_ARM_LDRS_SB_G0"); break;
-    case 79: strcpy(str, "R_ARM_LDRS_SB_G1"); break;
-    case 80: strcpy(str, "R_ARM_LDRS_SB_G2"); break;
-    case 81: strcpy(str, "R_ARM_LDC_SB_G0"); break;
-    case 82: strcpy(str, "R_ARM_LDC_SB_G1"); break;
-    case 83: strcpy(str, "R_ARM_LDC_SB_G2"); break;
-    case 84: strcpy(str, "R_ARM_MOVW_BREL_NC"); break;
-    case 85: strcpy(str, "R_ARM_MOVT_BREL"); break;
-    case 86: strcpy(str, "R_ARM_MOVW_BREL"); break;
-    case 87: strcpy(str, "R_ARM_THM_MOVW_BREL_NC"); break;
-    case 88: strcpy(str, "R_ARM_THM_MOVT_BREL"); break;
-    case 89: strcpy(str, "R_ARM_THM_MOVW_BREL"); break;
-    case 90: strcpy(str, "R_ARM_TLS_GOTDESC"); break;
-    case 91: strcpy(str, "R_ARM_TLS_CALL"); break;
-    case 92: strcpy(str, "R_ARM_TLS_DESCSEQ"); break;
-    case 93: strcpy(str, "R_ARM_THM_TLS_CALL"); break;
-    case 94: strcpy(str, "R_ARM_PLT32_ABS"); break;
-    case 95: strcpy(str, "R_ARM_GOT_ABS"); break;
-    case 96: strcpy(str, "R_ARM_GOT_PREL"); break;
-    case 97: strcpy(str, "R_ARM_GOT_BREL12"); break;
-    case 98: strcpy(str, "R_ARM_GOTOFF12"); break;
-    case 99: strcpy(str, "R_ARM_GOTRELAX"); break;
-    case 100: strcpy(str, "R_ARM_GNU_VTENTRY"); break;
-    case 101: strcpy(str, "R_ARM_GNU_VTINHERIT"); break;
-    case 102: strcpy(str, "R_ARM_THM_JUMP11"); break;
-    case 103: strcpy(str, "R_ARM_THM_JUMP8"); break;
-    case 104: strcpy(str, "R_ARM_TLS_GD32"); break;
-    case 105: strcpy(str, "R_ARM_TLS_LDM32"); break;
-    case 106: strcpy(str, "R_ARM_TLS_LDO32"); break;
-    case 107: strcpy(str, "R_ARM_TLS_IE32"); break;
-    case 108: strcpy(str, "R_ARM_TLS_LE32"); break;
-    case 109: strcpy(str, "R_ARM_TLS_LDO12"); break;
-    case 110: strcpy(str, "R_ARM_TLS_LE12"); break;
-    case 111: strcpy(str, "R_ARM_TLS_IE12GP"); break;
-    case 112: strcpy(str, "R_ARM_PRIVATE1"); break;
-    case 113: strcpy(str, "R_ARM_PRIVATE2"); break;
-    case 114: strcpy(str, "R_ARM_PRIVATE3"); break;
-    case 115: strcpy(str, "R_ARM_PRIVATE4"); break;
-    case 116: strcpy(str, "R_ARM_PRIVATE5"); break;
-    case 117: strcpy(str, "R_ARM_PRIVATE6"); break;
-    case 118: strcpy(str, "R_ARM_PRIVATE7"); break;
-    case 119: strcpy(str, "R_ARM_PRIVATE8"); break;
-    case 120: strcpy(str, "R_ARM_PRIVATE9"); break;
-    case 121: strcpy(str, "R_ARM_PRIVATE10"); break;
-    case 122: strcpy(str, "R_ARM_PRIVATE11"); break;
-    case 123: strcpy(str, "R_ARM_PRIVATE12"); break;
-    case 124: strcpy(str, "R_ARM_PRIVATE13"); break;
-    case 125: strcpy(str, "R_ARM_PRIVATE14"); break;
-    case 126: strcpy(str, "R_ARM_PRIVATE15"); break;
-    case 127: strcpy(str, "R_ARM_PRIVATE16"); break;
-    case 128: strcpy(str, "R_ARM_ME_TOO"); break;
-    case 129: strcpy(str, "R_ARM_THM_TLS_DESCSEQ16"); break;
-    case 130: strcpy(str, "R_ARM_THM_TLS_DESCSEQ32"); break;
-    case 131: strcpy(str, "R_ARM_THM_GOT_BREL12"); break;
-    case 132: strcpy(str, "R_ARM_THM_ALU_ABS_G0_NC"); break;
-    case 133: strcpy(str, "R_ARM_THM_ALU_ABS_G1_NC"); break;
-    case 134: strcpy(str, "R_ARM_THM_ALU_ABS_G2_NC"); break;
-    case 135: strcpy(str, "R_ARM_THM_ALU_ABS_G3"); break;
     default : strcpy(str, "ERREUR_TYPE"); break;
   }
   return str;
@@ -177,120 +74,186 @@ char* type_to_string(int type, char* str)
 
 //Les entrées REL et RELA sont séparées
 
-//Affiche les relations d'une entrée donée de type REL
-void afficher_relations_entree_REL(Elf32_Rel* entree_rel, Elf32_Shdr* reitab, elf_contexte_t* ctx)
-{
-    //On extrait le type, et on l'associe à son équivalent texte
-    unsigned char type_c = (unsigned char)entree_rel->r_info;
-    char type_s[32];
-    type_to_string((int)type_c, type_s);
-    
-    //Sym. value, sym. name : utiliser table des symboles
-    //On extrait l'index de table des symboles, et on l'associe à la table des symboles
-    int sym_c = (int)(entree_rel->r_info >> 8);
-    //printf("index : %d\n", sym_c);
-    int val_s = valeur_symbole(ctx, sym_c);
-    const char* nom_s = nom_symbole(ctx, sym_c);
-    
-    printf("%08x %08x %-16s %08x %s\n",
-               entree_rel->r_offset,
-               entree_rel->r_info,
-               type_s,
-               val_s,
-               nom_s);
-}
+//Charge les relations d'une table REL
+elf_tableau_REL* charger_table_REL(Elf32_Shdr* reitab, char* name, int index, elf_contexte_t* ctx) {
+    elf_tableau_REL tableau = malloc(sizeof(elf_tableau_REL));
 
-
-
-//Affiche les relations d'une entrée donée de type RELA
-void afficher_relations_entree_RELA(Elf32_Rela* entree_rela, Elf32_Shdr* reitab, elf_contexte_t* ctx)
-{
-    //On extrait le type, et on l'associe à son équivalent texte
-    unsigned char type_c = (unsigned char)entree_rela->r_info;
-    char type_s[32];
-    type_to_string((int)type_c, type_s);
-    
-    //Sym. value, sym. name : utiliser table des symboles
-    //On extrait l'index de table des symboles, et on l'associe à la table des symboles
-    int sym_c = (int)(entree_rela->r_info >> 8);
-    //printf("index : %d\n", sym_c);
-    int val_s = valeur_symbole(ctx, sym_c);
-    const char* nom_s = nom_symbole(ctx, sym_c);
-    
-    printf("%08x %08x %-16s %08x %-16s",
-               entree_rela->r_offset,
-               entree_rela->r_info,
-               type_s,
-               val_s,
-               nom_s);
-               
-    int addend = (int)entree_rela->r_addend;
-    if (addend > 0) printf("+ %d\n", addend);
-    else printf("- %d\n", -addend);
-}
-
-//Itere sur une table de reimplantations, et affiche toutes les entrees
-int afficher_table_relations(Elf32_Shdr* reitab, elf_contexte_t* ctx, char* reitab_name)
-{
-    Elf32_Word type = reitab->sh_type;
     int nb_relations = reitab->sh_size / reitab->sh_entsize;
-    printf("Section de readressage %s à l'adresse offset 0x%x contient %d entrées : \n", reitab_name, reitab->sh_offset, nb_relations);
-    if (type == SHT_RELA)
-    {
-        Elf32_Rela* entree_rela = malloc(reitab->sh_size);
+    Elf32_Rel* entree_rel = malloc(reitab->sh_size);
+
+    tableau->nb_entrees = nb_relations;
+    tableau->entrees = malloc(sizeof(elf_entree_REL) * nb_relations);
+    tableau->nom = name;
+    tableau->offset = index;
         
-        fseek(ctx->file, reitab->sh_offset, SEEK_SET);
-        if (fread(entree_rela, reitab->sh_size, 1, ctx->file) != 1) {
-          printf("ERREUR fread RELA\n");
-          return -1;
-        }
-        
-        printf("Offset   Info     Type             Sym.Value Sym.Name + Addend\n");
-        for (int i = 0; i < nb_relations; i++)
-        {
-            afficher_relations_entree_RELA(inverse_RELA(entree_rela + i), reitab, ctx);
-        }
-        free (entree_rela);
+    fseek(ctx->file, reitab->sh_offset, SEEK_SET);
+    if (fread(entree_rel, reitab->sh_size, 1, ctx->file) != 1) {
+        printf("ERREUR fread REL\n");
+        return -1;
     }
-    else if (type == SHT_REL)
+    
+    Elf32_Rel* curr_rel;
+    elf_entree_REL* curr_entree;
+    unsigned char type_c;
+    char type_s[32];
+    int sym_c;
+    int val_s;
+    const char* nom_s;
+    for (int i = 0; i < nb_relations; i++)
     {
-        Elf32_Rel* entree_rel = malloc(reitab->sh_size);
-        
-        fseek(ctx->file, reitab->sh_offset, SEEK_SET);
-        if (fread(entree_rel, reitab->sh_size, 1, ctx->file) != 1) {
-          printf("ERREUR fread REL\n");
-          return -1;
-        }
-        
-        printf("Offset   Info     Type             Sym.Value Sym.Name\n");
-        for (int i = 0; i < nb_relations; i++)
-        {
-            afficher_relations_entree_REL(inverse_REL(entree_rel + i), reitab, ctx);
-        }
-        free (entree_rel);
+        curr_rel = inverse_REL(entree_rel + i);
+        curr_entree = malloc(sizeof(elf_entree_REL));
+
+        //On extrait le type, et on l'associe à son équivalent texte
+        type_c = (unsigned char)entree_rel->r_info;
+        type_to_string((int)type_c, type_s);
+    
+        //On extrait l'index de table des symboles, et on l'associe à la table des symboles
+        sym_c = (int)(entree_rel->r_info >> 8);
+        val_s = valeur_symbole(ctx, sym_c);
+        nom_s = nom_symbole(ctx, sym_c);
+
+        curr_entree->offset = entree_rel->r_offset;
+        curr_entree->info = entree_rel->r_info;
+        curr_entree->type = type_s;
+        curr_entree->valeur = val_s;
+        curr_entree->nom = nom_s;
+
+        tableau->entrees[i] = *curr_entree;
     }
-    else return -1;
-    return 0;
+    free (entree_rel);
 }
 
-int lire_sections_reimplantations(elf_contexte_t* ctx)
+//Affiche les relations d'une table REL
+void afficher_table_REL(elf_tableau_REL* tableau)
 {
-  int chargement_err = 0;
+    printf("Section de readressage %s à l'adresse offset 0x%x contient %d entrées : \n", tableau->nom, tableau->offset, tableau->nb_entrees);
+    printf("Offset   Info     Type             Sym.Value Sym.Name\n");
+    
+    elf_entree_REL entree;
+    for (int i = 0; i < tableau->nb_entrees; i++)
+    {
+        entree = tableau->entrees[i];
+        printf("%08x %08x %-16s %08x %s\n",
+            entree->offset,
+            entree->info,
+            entree->type,
+            entree->valeur,
+            entree->nom);
+    }
+}
+
+//Charge les relations d'une table RELA
+elf_tableau_RELA* charger_table_REL(Elf32_Shdr* reitab, char* name, int index, elf_contexte_t* ctx) {
+    elf_tableau_RELA tableau = malloc(sizeof(elf_tableau_RELA));
+
+    int nb_relations = reitab->sh_size / reitab->sh_entsize;
+    Elf32_Rela* entree_rela = malloc(reitab->sh_size);
+
+    tableau->nb_entrees = nb_relations;
+    tableau->entrees = malloc(sizeof(elf_entree_RELA) * nb_relations);
+    tableau->nom = name;
+    tableau->offset = index;
+        
+    fseek(ctx->file, reitab->sh_offset, SEEK_SET);
+    if (fread(entree_rela, reitab->sh_size, 1, ctx->file) != 1) {
+        printf("ERREUR fread RELA\n");
+        return -1;
+    }
+    
+    Elf32_Rel* curr_rel;
+    elf_entree_RELA* curr_entree;
+    unsigned char type_c;
+    char type_s[32];
+    int sym_c;
+    int val_s;
+    const char* nom_s;
+    for (int i = 0; i < nb_relations; i++)
+    {
+        curr_rel = inverse_REL(entree_rela + i);
+        curr_entree = malloc(sizeof(elf_entree_RELA));
+
+        //On extrait le type, et on l'associe à son équivalent texte
+        type_c = (unsigned char)entree_rela->r_info;
+        type_to_string((int)type_c, type_s);
+    
+        //On extrait l'index de table des symboles, et on l'associe à la table des symboles
+        sym_c = (int)(entree_rela->r_info >> 8);
+        val_s = valeur_symbole(ctx, sym_c);
+        nom_s = nom_symbole(ctx, sym_c);
+
+        curr_entree->offset = entree_rela->r_offset;
+        curr_entree->info = entree_rela->r_info;
+        curr_entree->type = type_s;
+        curr_entree->valeur = val_s;
+        curr_entree->nom = nom_s;
+        curr_entree->addend = (int)entree_rela->r_addend;
+
+        tableau->entrees[i] = *curr_entree;
+    }
+    free (entree_rela);
+}
+
+//Affiche les relations d'une table RELA
+void afficher_table_RELA(elf_tableau_REL* tableau)
+{
+    printf("Section de readressage %s à l'adresse offset 0x%x contient %d entrées : \n", tableau->nom, tableau->offset, tableau->nb_entrees);
+    printf("Offset   Info     Type             Sym.Value Sym.Name + Addend\n");
+    
+    elf_entree_REL entree;
+    for (int i = 0; i < tableau->nb_entrees; i++)
+    {
+        entree = tableau->entrees[i];
+        printf("%08x %08x %-16s %08x %s %d \n",
+            entree->offset,
+            entree->info,
+            entree->type,
+            entree->valeur,
+            entree->nom
+            entree->addend);
+    }
+}
+
+// A réécrire une fois que la table des sections sera séparées
+// Trouver toutes les sections REL et RELA, et les mettre dans une struct
+elf_tables_reimplantations* charger_tables_reimplantations(elf_contexte_t* ctx)
+{
+    elf_tables_reimplantations* tables = malloc(sizeof(elf_tables_reimplantations));
+
+
+    /*int chargement_err = 0;
     if (ctx->nb_symboles == 0){
         chargement_err = charger_table_symboles(ctx);
         if (chargement_err == -1) return -1;
     }
   
-  char reitab_name[32];
-  strcpy(reitab_name, ".rel.text");
-  int idx_reitab = trouver_section(ctx, reitab_name);
+    char reitab_name[32];
+    strcpy(reitab_name, ".rel.text");
+    int idx_reitab = trouver_section(ctx, reitab_name);
 
-  if (idx_reitab == -1) {
-    fprintf(stderr, "Table des reimplantations non trouvée \n");
-    return -1;
-  }
+    if (idx_reitab == -1) {
+        fprintf(stderr, "Table des reimplantations non trouvée \n");
+        exit(1);
+    }
 
-  Elf32_Shdr *reitab = &ctx->sections[idx_reitab];
-  afficher_table_relations(reitab, ctx, reitab_name);
-  return 0;
+    Elf32_Shdr *reitab = &ctx->sections[idx_reitab];
+
+    Elf32_Word type = reitab->sh_type;
+
+    afficher_table_relations(reitab, ctx, reitab_name);*/
+
+
+    return tables;
+}
+
+int afficher_tables_reimplantations(elf_tables_reimplantations* tables)
+{
+    for (int i = 0; i < tables->nb_REL; i++)
+    {
+        afficher_table_REL(tables->tableaux_REL[i]);
+    }
+    for (int i = 0; i < tables->nb_RELA; i++)
+    {
+        afficher_table_REL(tables->tableaux_RELA[i]);
+    }
 }
