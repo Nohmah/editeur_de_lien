@@ -33,7 +33,7 @@ Puis lancer :
 ./elf_reader (fichier ELF) (paramètre)
 
 Liste des paramètres disponibles : -h, -S, -s, -x, -r.
-
+Vous pouvez lancer ./elf_reader sans paramètre pour obtenir plus d’informations sur les différents paramètres disponibles.
 
 ## Crédits :
 Personnes ayant travaillé sur le projet :
