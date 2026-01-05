@@ -6,91 +6,66 @@
 #include <elf.h>
 #include "util.h"
 #include "elf_lecture_section.h"
+#include "elf_symboles.h"
 
-int elf_lecture_section(FILE* f, char *section) {
-    rewind(f);
-    Elf32_Ehdr hdr;
-    fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
+int elf_lecture_section(elf_contexte_t *ctx, const char *section) {
     
-    uint32_t shoff = reverse_4(hdr.e_shoff); // offset de la table des sections
-    uint16_t shnum = reverse_2(hdr.e_shnum); // nombre de sections
-    uint16_t shstrndx = reverse_2(hdr.e_shstrndx); // index de la section qui contient les noms
-    
-    Elf32_Shdr *sections = malloc(shnum * sizeof(Elf32_Shdr));
-    fseek(f, shoff, SEEK_SET);
-    fread(sections, sizeof(Elf32_Shdr), shnum, f);
-    
+    FILE *f = ctx->file;
+    uint16_t shnum = ctx->ehdr.e_shnum;
+
     // Trouver l'index de la section demandée
     int section_index = -1;
     char *end;
     long num = strtol(section, &end, 10);
     
     if (*end == '\0') {
-    	// C'est un numéro
+        // C'est un numéro
         if (num >= 0 && num < shnum) {
             section_index = (int)num;
         } else {
             fprintf(stderr, "Numéro de section invalide. Candidats:(0-%d)\n", shnum-1);
-            free(sections);
             return 1;
         }
     } else {
-        // C'est un nom
-        uint32_t off  = reverse_4(sections[shstrndx].sh_offset);
-    	uint32_t size = reverse_4(sections[shstrndx].sh_size);
-        
-        fseek(f, off, SEEK_SET);
-        char *shstrtab = malloc(size);
-        fread(shstrtab, 1, size, f);
-        
-        for (int i = 0; i < shnum; i++) {
-            uint32_t name_offset = reverse_4(sections[i].sh_name);
-            if (strcmp(shstrtab + name_offset, section) == 0){
-                section_index = i;
-                break;
-            }
-        }
-        free(shstrtab);
+        // C'est un nom - utiliser trouver_section() de elf_symboles.c
+        section_index = trouver_section(ctx, section);
         if (section_index == -1) {
             fprintf(stderr, "Section '%s' non trouvée\n", section);
-            free(sections);
             return 1;
         }
     }
     
     // Infos sur la section trouvée
-    Elf32_Shdr target = sections[section_index];
-    uint32_t offset = reverse_4(target.sh_offset);
-    uint32_t size = reverse_4(target.sh_size);
+    Elf32_Shdr target = ctx->sections[section_index];
+    uint32_t offset = target.sh_offset;
+    uint32_t size = target.sh_size;
     
-    // Nom de la section voulue
-    char section_name[256] = "";
-    if (shstrndx < shnum) {
-        uint32_t shstrtab_offset = reverse_4(sections[shstrndx].sh_offset);
-        uint32_t name_offset = reverse_4(target.sh_name);
-        fseek(f, shstrtab_offset + name_offset, SEEK_SET);
-        for (int i = 0; i < sizeof(section_name) - 1; i++) {
-            char c;
-            if (fread(&c, 1, 1, f) != 1 || c == '\0') break;
-            section_name[i] = c;
-        }
-    }
+    // Récupérer le nom de la section
+    const char *section_name = ctx->noms_sections + target.sh_name;
     
     // Affichage de l'en-tête
     printf("\nContenu hexadecimal de la section '%s':\n", section_name);
     
     if (size == 0) {
         printf("Section vide\n");
-        free(sections);
         return 0;
     }
     
     // Lecture du contenu
     fseek(f, offset, SEEK_SET);
     unsigned char *buffer = malloc(size);
-    fread(buffer, 1, size, f);
+    if (!buffer) {
+        perror("Erreur d'allocation mémoire");
+        return 1;
+    }
     
-    // Ecriture du contenu
+    if (fread(buffer, 1, size, f) != size) {
+        fprintf(stderr, "Erreur lors de la lecture du contenu de la section\n");
+        free(buffer);
+        return 1;
+    }
+    
+    // Écriture du contenu
     for (uint32_t i = 0; i < size; i += 16) {
         printf("  0x%08x ", i);
         
@@ -114,7 +89,6 @@ int elf_lecture_section(FILE* f, char *section) {
     }
 
     free(buffer);
-    free(sections);
     
     return 0;
 }

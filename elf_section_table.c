@@ -4,52 +4,32 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "util.h"
+#include "elf_symboles.h"
 
-void elf_section(FILE *f){
+void afficher_sections_table(const elf_contexte_t *ctx) {
     
-    rewind(f);
-    Elf32_Ehdr hdr;
-    fread(&hdr, 1, sizeof(Elf32_Ehdr), f);
-
-    uint32_t shoff     = reverse_4(hdr.e_shoff);
-    uint16_t shnum     = reverse_2(hdr.e_shnum);
-    uint16_t shentsize = reverse_2(hdr.e_shentsize);
-    uint16_t shstrndx  = reverse_2(hdr.e_shstrndx);
-
-    Elf32_Shdr *sections = malloc(shnum * sizeof(Elf32_Shdr));
-
-    fseek(f, shoff, SEEK_SET);
-    for (int i = 0; i < shnum; i++)
-        fread(&sections[i], 1, shentsize, f);
-
-    /* lecture de .shstrtab */
-    Elf32_Shdr shstr = sections[shstrndx];
-    uint32_t off  = reverse_4(shstr.sh_offset);
-    uint32_t size = reverse_4(shstr.sh_size);
-
-    char *shstrtab = malloc(size);
-    fseek(f, off, SEEK_SET);
-    fread(shstrtab, 1, size, f);
-
+    uint32_t shoff = ctx->ehdr.e_shoff;
+    uint16_t shnum = ctx->ehdr.e_shnum;
+    
     printf("\nThere are %d section headers, starting at offset 0x%x:\n\n", shnum, shoff);
-
     printf("Section Headers:\n");
     printf("[Nr] Name               Type           Addr     Off    Size   ES Flg Lk Inf Al\n");
 
     for (int i = 0; i < shnum; i++) {
-        Elf32_Shdr *sh = &sections[i];
+        Elf32_Shdr *sh = &ctx->sections[i];
 
-        const char *name = shstrtab + reverse_4(sh->sh_name);
+        // Récupérer le nom depuis la table des noms
+        const char *name = ctx->noms_sections + sh->sh_name;
 
-        uint32_t type  = reverse_4(sh->sh_type);
-        uint32_t addr  = reverse_4(sh->sh_addr);
-        uint32_t off   = reverse_4(sh->sh_offset);
-        uint32_t size  = reverse_4(sh->sh_size);
-        uint32_t es    = reverse_4(sh->sh_entsize);
-        uint32_t flags = reverse_4(sh->sh_flags);
-        uint32_t link  = reverse_4(sh->sh_link);
-        uint32_t info  = reverse_4(sh->sh_info);
-        uint32_t al    = reverse_4(sh->sh_addralign);
+        uint32_t type  = sh->sh_type;
+        uint32_t addr  = sh->sh_addr;
+        uint32_t off   = sh->sh_offset;
+        uint32_t size  = sh->sh_size;
+        uint32_t es    = sh->sh_entsize;
+        uint32_t flags = sh->sh_flags;
+        uint32_t link  = sh->sh_link;
+        uint32_t info  = sh->sh_info;
+        uint32_t al    = sh->sh_addralign;
 
         printf("[%2d] %-18s %-14s %08x %06x %06x %02x ",
                i, name, sh_type_str(type),
@@ -59,13 +39,9 @@ void elf_section(FILE *f){
 
         printf(" %2d %3d %2d\n", link, info, al);
     }
-
-    free(shstrtab);
-    free(sections);
 }
 
-const char *sh_type_str(uint32_t type)
-{
+const char *sh_type_str(uint32_t type) {
     switch (type) {
         case SHT_NULL:          return "NULL";
         case SHT_PROGBITS:      return "PROGBITS";
@@ -84,8 +60,7 @@ const char *sh_type_str(uint32_t type)
     }
 }
 
-void print_flags(uint32_t flags)
-{
+void print_flags(uint32_t flags) {
     char out[4] = "   ";
     int i = 0;
 

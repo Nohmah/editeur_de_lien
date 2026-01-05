@@ -45,58 +45,56 @@ int main(int argc, char *argv[]) {
 		}
 		exit(1);
 	}
-	if (!verifier_fichier(f)){
+
+	elf_contexte_t ctx;
+	memset(&ctx, 0, sizeof(ctx));
+
+	if (!verifier_fichier(f, &ctx)){
 	    fprintf(stderr, "Ce programme ne supporte que les fichiers ELF 32 bits ARM big endian.\n");
+	    fclose(f);
 	    exit(1);
 	}
 
 	// Exécution de la commande demandée
-	char *commande;
-	commande = argv[2];
+	char *commande = argv[2];
 
 	if (strcmp(commande, "-h") == 0) {
-    	afficher_entete();
+    	afficher_entete(&ctx);
 	}
 	else if (strcmp(commande, "-S") == 0) {
-	    elf_section(f);
+	    lire_table_sections(&ctx);
+	    lire_noms_sections(&ctx);
+	    afficher_sections_table(&ctx);
 	}
 	else if (strcmp(commande, "-x") == 0) {
-		if (argc>=4){
-			elf_lecture_section(f, argv[3]);
-		} else {
-			elf_section(f);
-			printf("Veuillez entrer le nom ou le numéro de la section : ");
-			char section[100];
-			if (fgets(section, sizeof(section), stdin) != NULL){
-				section[strcspn(section, "\n")] = '\0';
-				if (strlen(section)>0){
-					elf_lecture_section(f, section);
-				} else {
-					fprintf(stderr, "Erreur: Aucune section spécifiée.\n");
-	    			exit(1);
-				}
-			}
-		}
+		lire_table_sections(&ctx);
+		lire_noms_sections(&ctx);
+	    if (argc >= 4) {
+	        elf_lecture_section(&ctx, argv[3]);
+	    } else {
+		    afficher_sections_table(&ctx);
+	        printf("Veuillez entrer le nom ou le numéro de la section : ");
+	        char section[100];
+	        if (fgets(section, sizeof(section), stdin) != NULL) {
+	            section[strcspn(section, "\n")] = '\0';
+	            if (strlen(section) > 0) {
+	                elf_lecture_section(&ctx, section);
+	            } else {
+	                fprintf(stderr, "Erreur: Aucune section spécifiée.\n");
+	                exit(1);
+	            }
+	        }
+	    }
 	}
 	else if (strcmp(commande, "-s") == 0) {
-	    elf_contexte_t ctx;
-	    memset(&ctx, 0, sizeof(ctx));
-	    ctx.file = f;
-	    lire_entete_elf(&ctx);
 	    lire_table_sections(&ctx);
 	    lire_noms_sections(&ctx);
 	    lire_table_symboles(&ctx);
-	    liberer_contexte(&ctx);
 	}
 	else if (strcmp(commande, "-r") == 0) {
-	    elf_contexte_t ctx;
-	    memset(&ctx, 0, sizeof(ctx));
-	    ctx.file = f;
-	    lire_entete_elf(&ctx);
 	    lire_table_sections(&ctx);
 	    lire_noms_sections(&ctx);
       	afficher_tables_reimplantations(charger_tables_reimplantations(&ctx));
-      	liberer_contexte(&ctx);
 	}
 	else {
 	    fprintf(stderr, "Commande non reconnue: %s\n", commande);
@@ -104,6 +102,7 @@ int main(int argc, char *argv[]) {
 	    fclose(f);
 	    exit(1);
 	}
+	liberer_contexte(&ctx);
 	fclose(f);
 	exit(0);
 }
