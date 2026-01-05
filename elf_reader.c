@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 	    lire_entete_elf(&ctx);
 	    lire_table_sections(&ctx);
 	    lire_noms_sections(&ctx);
-      	lire_sections_reimplantations(&ctx);
+      	afficher_tables_reimplantations(charger_tables_reimplantations(&ctx));
       	liberer_contexte(&ctx);
 	}
 	else {

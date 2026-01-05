@@ -75,53 +75,57 @@ char* type_to_string(int type, char* str)
 //Les entrées REL et RELA sont séparées
 
 //Charge les relations d'une table REL
-elf_tableau_REL* charger_table_REL(Elf32_Shdr* reitab, char* name, int index, elf_contexte_t* ctx) {
-    elf_tableau_REL tableau = malloc(sizeof(elf_tableau_REL));
+elf_tableau_REL* charger_table_REL(Elf32_Shdr* reitab, elf_contexte_t* ctx, int index) {
+    elf_tableau_REL* tableau = malloc(sizeof(elf_tableau_REL));
 
     int nb_relations = reitab->sh_size / reitab->sh_entsize;
     Elf32_Rel* entree_rel = malloc(reitab->sh_size);
 
     tableau->nb_entrees = nb_relations;
     tableau->entrees = malloc(sizeof(elf_entree_REL) * nb_relations);
-    tableau->nom = name;
-    tableau->offset = index;
+    
+    char nom[32];
+    strcpy(nom, ctx->noms_sections + index);
+    tableau->nom = nom;
+    tableau->offset = reitab->sh_offset;
         
     fseek(ctx->file, reitab->sh_offset, SEEK_SET);
     if (fread(entree_rel, reitab->sh_size, 1, ctx->file) != 1) {
         printf("ERREUR fread REL\n");
-        return -1;
+        exit(1);
     }
     
     Elf32_Rel* curr_rel;
     elf_entree_REL* curr_entree;
     unsigned char type_c;
-    char type_s[32];
+    char* type_s = malloc(sizeof(char) * 32);
     int sym_c;
     int val_s;
-    const char* nom_s;
+    char* nom_s = malloc(sizeof(char) * 32);
     for (int i = 0; i < nb_relations; i++)
     {
-        curr_rel = inverse_REL(entree_rel + i);
+        curr_rel = inverse_REL(&entree_rel[i]);
         curr_entree = malloc(sizeof(elf_entree_REL));
 
         //On extrait le type, et on l'associe à son équivalent texte
-        type_c = (unsigned char)entree_rel->r_info;
+        type_c = (unsigned char)curr_rel->r_info;
         type_to_string((int)type_c, type_s);
     
         //On extrait l'index de table des symboles, et on l'associe à la table des symboles
-        sym_c = (int)(entree_rel->r_info >> 8);
+        sym_c = (int)(curr_rel->r_info >> 8);
         val_s = valeur_symbole(ctx, sym_c);
-        nom_s = nom_symbole(ctx, sym_c);
+        strcpy(nom_s, nom_symbole(ctx, sym_c));
 
-        curr_entree->offset = entree_rel->r_offset;
-        curr_entree->info = entree_rel->r_info;
+        curr_entree->offset = curr_rel->r_offset;
+        curr_entree->info = curr_rel->r_info;
         curr_entree->type = type_s;
         curr_entree->valeur = val_s;
         curr_entree->nom = nom_s;
 
         tableau->entrees[i] = *curr_entree;
     }
-    free (entree_rel);
+    free (curr_rel);
+    return tableau;
 }
 
 //Affiche les relations d'une table REL
@@ -130,10 +134,10 @@ void afficher_table_REL(elf_tableau_REL* tableau)
     printf("Section de readressage %s à l'adresse offset 0x%x contient %d entrées : \n", tableau->nom, tableau->offset, tableau->nb_entrees);
     printf("Offset   Info     Type             Sym.Value Sym.Name\n");
     
-    elf_entree_REL entree;
+    elf_entree_REL* entree;
     for (int i = 0; i < tableau->nb_entrees; i++)
     {
-        entree = tableau->entrees[i];
+        entree = &tableau->entrees[i];
         printf("%08x %08x %-16s %08x %s\n",
             entree->offset,
             entree->info,
@@ -144,72 +148,76 @@ void afficher_table_REL(elf_tableau_REL* tableau)
 }
 
 //Charge les relations d'une table RELA
-elf_tableau_RELA* charger_table_REL(Elf32_Shdr* reitab, char* name, int index, elf_contexte_t* ctx) {
-    elf_tableau_RELA tableau = malloc(sizeof(elf_tableau_RELA));
+elf_tableau_RELA* charger_table_RELA(Elf32_Shdr* reitab, elf_contexte_t* ctx, int index) {
+    elf_tableau_RELA* tableau = malloc(sizeof(elf_tableau_RELA));
 
     int nb_relations = reitab->sh_size / reitab->sh_entsize;
     Elf32_Rela* entree_rela = malloc(reitab->sh_size);
 
     tableau->nb_entrees = nb_relations;
     tableau->entrees = malloc(sizeof(elf_entree_RELA) * nb_relations);
-    tableau->nom = name;
-    tableau->offset = index;
+    
+    char nom[32];
+    strcpy(nom, ctx->noms_sections + index);
+    tableau->nom = nom;
+    tableau->offset = reitab->sh_offset;
         
     fseek(ctx->file, reitab->sh_offset, SEEK_SET);
     if (fread(entree_rela, reitab->sh_size, 1, ctx->file) != 1) {
         printf("ERREUR fread RELA\n");
-        return -1;
+        exit(1);
     }
     
-    Elf32_Rel* curr_rel;
+    Elf32_Rela* curr_rela;
     elf_entree_RELA* curr_entree;
     unsigned char type_c;
-    char type_s[32];
+    char* type_s = malloc(sizeof(char) * 32);
     int sym_c;
     int val_s;
-    const char* nom_s;
+    char* nom_s = malloc(sizeof(char) * 32);
     for (int i = 0; i < nb_relations; i++)
     {
-        curr_rel = inverse_REL(entree_rela + i);
+        curr_rela = inverse_RELA(&entree_rela[i]);
         curr_entree = malloc(sizeof(elf_entree_RELA));
 
         //On extrait le type, et on l'associe à son équivalent texte
-        type_c = (unsigned char)entree_rela->r_info;
+        type_c = (unsigned char)curr_rela->r_info;
         type_to_string((int)type_c, type_s);
     
         //On extrait l'index de table des symboles, et on l'associe à la table des symboles
-        sym_c = (int)(entree_rela->r_info >> 8);
+        sym_c = (int)(curr_rela->r_info >> 8);
         val_s = valeur_symbole(ctx, sym_c);
-        nom_s = nom_symbole(ctx, sym_c);
+        strcpy(nom_s, nom_symbole(ctx, sym_c));
 
-        curr_entree->offset = entree_rela->r_offset;
-        curr_entree->info = entree_rela->r_info;
+        curr_entree->offset = curr_rela->r_offset;
+        curr_entree->info = curr_rela->r_info;
         curr_entree->type = type_s;
         curr_entree->valeur = val_s;
         curr_entree->nom = nom_s;
-        curr_entree->addend = (int)entree_rela->r_addend;
+        curr_entree->addend = (int)curr_rela->r_addend;
 
         tableau->entrees[i] = *curr_entree;
     }
-    free (entree_rela);
+    free (curr_rela);
+    return tableau;
 }
 
 //Affiche les relations d'une table RELA
-void afficher_table_RELA(elf_tableau_REL* tableau)
+void afficher_table_RELA(elf_tableau_RELA* tableau)
 {
     printf("Section de readressage %s à l'adresse offset 0x%x contient %d entrées : \n", tableau->nom, tableau->offset, tableau->nb_entrees);
     printf("Offset   Info     Type             Sym.Value Sym.Name + Addend\n");
     
-    elf_entree_REL entree;
+    elf_entree_RELA* entree;
     for (int i = 0; i < tableau->nb_entrees; i++)
     {
-        entree = tableau->entrees[i];
+        entree = &tableau->entrees[i];
         printf("%08x %08x %-16s %08x %s %d \n",
             entree->offset,
             entree->info,
             entree->type,
             entree->valeur,
-            entree->nom
+            entree->nom,
             entree->addend);
     }
 }
@@ -219,41 +227,53 @@ void afficher_table_RELA(elf_tableau_REL* tableau)
 elf_tables_reimplantations* charger_tables_reimplantations(elf_contexte_t* ctx)
 {
     elf_tables_reimplantations* tables = malloc(sizeof(elf_tables_reimplantations));
-
-
-    /*int chargement_err = 0;
-    if (ctx->nb_symboles == 0){
-        chargement_err = charger_table_symboles(ctx);
-        if (chargement_err == -1) return -1;
+    int nb_REL = 0;
+    int nb_RELA = 0;
+    
+    int nb_sections = ctx->ehdr.e_shnum;
+    Elf32_Shdr* section;
+    for (int i = 0; i < nb_sections; i++)
+    {
+        section = &ctx->sections[i];
+        if (section->sh_type == 9) nb_REL++;
+        if (section->sh_type == 4) nb_RELA++;
     }
-  
-    char reitab_name[32];
-    strcpy(reitab_name, ".rel.text");
-    int idx_reitab = trouver_section(ctx, reitab_name);
-
-    if (idx_reitab == -1) {
-        fprintf(stderr, "Table des reimplantations non trouvée \n");
-        exit(1);
+    
+    tables->tableaux_REL = malloc(sizeof(elf_tableau_REL) * nb_REL);
+    tables->tableaux_RELA = malloc(sizeof(elf_tableau_RELA) * nb_RELA);
+    
+    int REL_i = 0;
+    int RELA_i = 0;
+    for (int i = 0; i < nb_sections; i++)
+    {
+        section = &ctx->sections[i];
+        if (section->sh_type == 9)
+        {
+          tables->tableaux_REL[REL_i] = *charger_table_REL(section, ctx, i);
+          REL_i++;
+        }
+        if (section->sh_type == 4)
+        {
+          tables->tableaux_RELA[RELA_i] = *charger_table_RELA(section, ctx, i);
+          RELA_i++;
+        }
     }
 
-    Elf32_Shdr *reitab = &ctx->sections[idx_reitab];
-
-    Elf32_Word type = reitab->sh_type;
-
-    afficher_table_relations(reitab, ctx, reitab_name);*/
-
-
+    tables->nb_REL = nb_REL;
+    tables->nb_RELA = nb_RELA;
     return tables;
 }
 
 int afficher_tables_reimplantations(elf_tables_reimplantations* tables)
 {
+    printf("Tables de reimplantations : %d REL, %d RELA\n", tables->nb_REL, tables->nb_RELA);
     for (int i = 0; i < tables->nb_REL; i++)
     {
-        afficher_table_REL(tables->tableaux_REL[i]);
+        afficher_table_REL(&tables->tableaux_REL[i]);
     }
     for (int i = 0; i < tables->nb_RELA; i++)
     {
-        afficher_table_REL(tables->tableaux_RELA[i]);
+        afficher_table_RELA(&tables->tableaux_RELA[i]);
     }
+    return 0;
 }
