@@ -15,9 +15,9 @@ check() {
     local exp="$3"
 
     if [ "$got" = "$exp" ]; then
-        echo -e "  $label : ${GREEN}OK${NC}"
+        echo -en "  $label : ${GREEN}OK${NC}"
     else
-        echo -e "  $label : ${RED}FAIL${NC} ($got ≠ $exp)"
+        echo -en "  $label : ${RED}FAIL${NC} ($got ≠ $exp)"
         ERREUR=1
     fi
 }

@@ -155,14 +155,39 @@ int lire_table_symboles(elf_contexte_t *ctx)
             } else {
                 nom = "";
             }
+            
+        const char *section_str = NULL;
+        Elf32_Word shndx = ctx->symboles[i].st_shndx;
         
-        printf("%5d  %08x %-8s %-8s %7d  %s\n",
-               i,
-               ctx->symboles[i].st_value,
-               type_symbole(ctx->symboles[i].st_info),
-               portee_symbole(ctx->symboles[i].st_info),
-               ctx->symboles[i].st_shndx,
-               nom);
+        if (shndx == SHN_UNDEF) {
+            section_str = "UND";
+        } 
+        else if (shndx == SHN_ABS) {
+            section_str = "ABS";
+        } 
+        else if (shndx == SHN_COMMON) {
+            section_str = "COM";
+        }
+        
+        if (section_str != NULL) {
+            // Section spéciale
+            printf("%5d  %08x %-8s %-8s %7s  %s\n",
+                   i,
+                   ctx->symboles[i].st_value,
+                   type_symbole(ctx->symboles[i].st_info),
+                   portee_symbole(ctx->symboles[i].st_info),
+                   section_str,
+                   nom);
+        } else {
+            // Section normale
+            printf("%5d  %08x %-8s %-8s %7d  %s\n",
+                   i,
+                   ctx->symboles[i].st_value,
+                   type_symbole(ctx->symboles[i].st_info),
+                   portee_symbole(ctx->symboles[i].st_info),
+                   shndx,
+                   nom);
+        }
     }
 
     return 0;
