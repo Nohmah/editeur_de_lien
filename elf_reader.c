@@ -9,6 +9,7 @@
 #include "elf_symboles.h"
 #include "elf_lecture_section.h"
 #include "elf_reimplantation.h"
+#include "fusion_table.h"
 
 void usage(char *programme) {
     fprintf(stderr, "\nUsage:\n");
@@ -96,7 +97,50 @@ int main(int argc, char *argv[]) {
 	    lire_noms_sections(&ctx);
       	afficher_tables_reimplantations(charger_tables_reimplantations(&ctx));
 	}
-	else {
+	else if (strcmp(commande, "-f") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: %s <file1.o> -f <file2.o>\n", argv[0]);
+            exit(1);
+        }
+
+        elf_contexte_t ctx2, out;
+        memset(&ctx2, 0, sizeof(ctx2));
+        memset(&out, 0, sizeof(out));
+
+        FILE *f2 = fopen(argv[3], "rb");
+        if (!f2) { perror(argv[3]); exit(1); }
+
+        if (!verifier_fichier(f2, &ctx2)) { fclose(f2); exit(1); }
+
+        // Charger sections + noms pour les deux fichiers
+        if (lire_table_sections(&ctx) || lire_noms_sections(&ctx) ||
+            lire_table_sections(&ctx2) || lire_noms_sections(&ctx2)) {
+            fprintf(stderr, "Erreur de lecture des sections/noms\n");
+            fclose(f2); exit(1);
+        }
+
+        section_fusion_t *fusion = NULL;
+        int fusion_count = 0;
+
+        if (fusion_section_table(&ctx, &ctx2, &fusion, &fusion_count) != 0) {
+            fprintf(stderr, "fusion_section_table a échoué\n");
+            fclose(f2); exit(1);
+        }
+        concat_offset(&ctx, &ctx2, fusion, fusion_count);
+
+        out.file = fopen("fusion.o", "wb+");
+        if (!out.file) { perror("fusion.o"); exit(1); }
+
+        build_output_section_headers(&ctx, &ctx2, &out, fusion, fusion_count);
+        write_sections(&ctx, &ctx2, &out, fusion, fusion_count);
+
+        printf("Fichier fusion.o généré avec %d sections PROGBITS.\n", fusion_count);
+
+        for (int i = 0; i < fusion_count; i++) free(fusion[i].name);
+        free(fusion);
+        fclose(out.file);
+        fclose(f2);
+	} else {
 	    fprintf(stderr, "Commande non reconnue: %s\n", commande);
 	    usage(argv[0]);
 	    fclose(f);
