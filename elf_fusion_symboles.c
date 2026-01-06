@@ -19,7 +19,7 @@ char* fusionner_strings_1_dim(char* str1, char* str2, int len1, int len2)
   {
     str_fusion[i] = str1[i];
   }
-  for (int i = 0; i < len1; i++)
+  for (int i = 0; i < len2; i++)
   {
     str_fusion[i + len1] = str2[i];
   }
@@ -188,21 +188,51 @@ elf_table_sym_t* construire_table_sym_fusion(elf_table_sym_t* table1, elf_table_
 		table_fusion->symboles[offset_fusion + i] = curr_sym;
 	}
 	
-  //J'ai tenté de detruire table_separee_1->locaux etc. mais ça m'a mit erreur double free.
-  //Je pensais qu'il y aurait peut-être une fuite de mémoire ici ?
-	detruire_table_sym(table1);
-	detruire_table_sym(table2);
+  // Free the temporary separated tables but NOT the original data
+  free(table_separee_1->locaux->symboles);
+  free(table_separee_1->locaux);
+  free(table_separee_1->globaux->symboles);
+  free(table_separee_1->globaux);
   free(table_separee_1);
+  
+  free(table_separee_2->locaux->symboles);
+  free(table_separee_2->locaux);
+  free(table_separee_2->globaux->symboles);
+  free(table_separee_2->globaux);
   free(table_separee_2);
+  
+  free(table_global_temp->symboles);
+  free(table_global_temp);
+  
+  // CRITICAL FIX: Don't destroy table1 and table2 - just free the wrapper structures
+  free(table1);
+  free(table2);
+  
 	return table_fusion;
 }
 
+// FIXED VERSION: Make deep copies instead of shallow copies
 elf_table_sym_t* ctx_vers_fusion(elf_contexte_t* ctx)
 {
   elf_table_sym_t* table = malloc(sizeof(elf_table_sym_t));
-  table->symboles = ctx->symboles;
-  table->noms_symboles = ctx->noms_symboles;
+  
+  // Deep copy symboles
   table->nb_symboles = ctx->nb_symboles;
+  table->symboles = malloc(ctx->nb_symboles * sizeof(Elf32_Sym));
+  memcpy(table->symboles, ctx->symboles, ctx->nb_symboles * sizeof(Elf32_Sym));
+  
+  // Deep copy noms_symboles - find the size first
+  int len = 1;  // At least 1 for the initial null byte
+  for (int i = 0; i < ctx->nb_symboles; i++) {
+    if (ctx->symboles[i].st_name > 0) {
+      int end = ctx->symboles[i].st_name + strlen(ctx->noms_symboles + ctx->symboles[i].st_name) + 1;
+      if (end > len) len = end;
+    }
+  }
+  
+  table->noms_symboles = malloc(len);
+  memcpy(table->noms_symboles, ctx->noms_symboles, len);
+  
   return table;
 }
 
