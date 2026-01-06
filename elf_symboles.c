@@ -231,7 +231,31 @@ const char *nom_symbole(const elf_contexte_t *ctx, int i)
     if (i < 0 || i >= ctx->nb_symboles)
         return NULL;
 
-    return ctx->noms_symboles + ctx->symboles[i].st_name;
+    Elf32_Sym *sym = &ctx->symboles[i];
+
+    // Cas normal : symbole avec nom dans .strtab
+    if (sym->st_name != 0) {
+        return ctx->noms_symboles + sym->st_name;
+    }
+
+    // Cas symbole de section : st_name == 0
+    // On retourne le nom de la section pointée par st_shndx
+    Elf32_Section shndx = sym->st_shndx;
+    if (shndx == SHN_UNDEF) {
+        return "";
+    }
+    if (shndx == SHN_ABS) {
+        return "ABS";
+    }
+    if (shndx == SHN_COMMON) {
+        return "COMMON";
+    }
+    if (shndx >= ctx->ehdr.e_shnum) {
+        return "";
+    }
+
+    return ctx->noms_sections + ctx->sections[shndx].sh_name;
+
 }
 
 // Libération du contexte

@@ -13,7 +13,7 @@ char* type_to_string(int type, char* str)
 {
     switch(type)
     {
-    case 0: strcpy(str, "R_ARM_NONE Static Miscellaneous");
+    case 0: strcpy(str, "R_ARM_NONE Static Miscellaneous"); break;
     case 1: strcpy(str, "R_ARM_PC24"); break;
     case 2: strcpy(str, "R_ARM_ABS32"); break;
     case 3: strcpy(str, "R_ARM_REL32"); break;
@@ -45,6 +45,7 @@ char* type_to_string(int type, char* str)
     case 30: strcpy(str, "R_ARM_THM_JUMP24"); break;
     case 31: strcpy(str, "R_ARM_BASE_ABS"); break;
     case 32: strcpy(str, "R_ARM_ALU_PCREL_7_0"); break;
+    case 40: strcpy(str, "R_ARM_V4BX"); break; // Fichiers initiaux le demande
     default : strcpy(str, "ERREUR_TYPE"); break;
   }
   return str;
@@ -77,54 +78,75 @@ char* type_to_string(int type, char* str)
 //Charge les relations d'une table REL
 elf_tableau_REL* charger_table_REL(Elf32_Shdr* reitab, elf_contexte_t* ctx, int index) {
     elf_tableau_REL* tableau = malloc(sizeof(elf_tableau_REL));
+    if (!tableau) return NULL;
 
     int nb_relations = reitab->sh_size / reitab->sh_entsize;
     Elf32_Rel* entree_rel = malloc(reitab->sh_size);
+    if (!entree_rel) {
+        free(tableau);
+        return NULL;
+    }
 
     tableau->nb_entrees = nb_relations;
     tableau->entrees = malloc(sizeof(elf_entree_REL) * nb_relations);
-    
-    char nom[32];
-    strcpy(nom, ctx->noms_sections + index);
-    tableau->nom = nom;
+    if (!tableau->entrees) {
+        free(entree_rel);
+        free(tableau);
+        return NULL;
+    }
+
+    const char* nom_section = ctx->noms_sections + ctx->sections[index].sh_name;
+    tableau->nom = strdup(nom_section);
+    if (!tableau->nom) {
+        free(tableau->entrees);
+        free(entree_rel);
+        free(tableau);
+        return NULL;
+    }
+
     tableau->offset = reitab->sh_offset;
         
     fseek(ctx->file, reitab->sh_offset, SEEK_SET);
     if (fread(entree_rel, reitab->sh_size, 1, ctx->file) != 1) {
         printf("ERREUR fread REL\n");
+        free(tableau->nom);
+        free(tableau->entrees);
+        free(entree_rel);
+        free(tableau);
         exit(1);
     }
     
-    Elf32_Rel* curr_rel;
-    elf_entree_REL* curr_entree;
-    unsigned char type_c;
-    char* type_s = malloc(sizeof(char) * 32);
-    int sym_c;
-    int val_s;
-    char* nom_s = malloc(sizeof(char) * 32);
     for (int i = 0; i < nb_relations; i++)
     {
-        curr_rel = inverse_REL(&entree_rel[i]);
-        curr_entree = malloc(sizeof(elf_entree_REL));
+        inverse_REL(&entree_rel[i]);
 
-        //On extrait le type, et on l'associe à son équivalent texte
-        type_c = (unsigned char)curr_rel->r_info;
-        type_to_string((int)type_c, type_s);
-    
-        //On extrait l'index de table des symboles, et on l'associe à la table des symboles
-        sym_c = (int)(curr_rel->r_info >> 8);
-        val_s = valeur_symbole(ctx, sym_c);
-        strcpy(nom_s, nom_symbole(ctx, sym_c));
+        unsigned char type_c = ELF32_R_TYPE(entree_rel[i].r_info);
+        int sym_c = ELF32_R_SYM(entree_rel[i].r_info);
 
-        curr_entree->offset = curr_rel->r_offset;
-        curr_entree->info = curr_rel->r_info;
-        curr_entree->type = type_s;
-        curr_entree->valeur = val_s;
-        curr_entree->nom = nom_s;
+        elf_entree_REL* curr_entree = &tableau->entrees[i];
 
-        tableau->entrees[i] = *curr_entree;
+        curr_entree->offset = entree_rel[i].r_offset;
+        curr_entree->info   = entree_rel[i].r_info;
+
+        curr_entree->type = malloc(64);
+        if (curr_entree->type)
+            type_to_string((int)type_c, curr_entree->type);
+        else
+            curr_entree->type = "ERROR_MALLOC_TYPE";
+
+        const char* nom_sym = nom_symbole(ctx, sym_c);
+        if (nom_sym && nom_sym[0] != '\0') {
+            curr_entree->nom = strdup(nom_sym);
+            if (!curr_entree->nom)
+                curr_entree->nom = "ERROR_MALLOC_NOM";
+        } else {
+            curr_entree->nom = strdup("");
+        }
+
+        curr_entree->valeur = valeur_symbole(ctx, sym_c);
     }
-    free (curr_rel);
+
+    free(entree_rel);
     return tableau;
 }
 
@@ -134,71 +156,99 @@ void afficher_table_REL(elf_tableau_REL* tableau)
     printf("Section de readressage %s à l'adresse offset 0x%x contient %d entrées : \n", tableau->nom, tableau->offset, tableau->nb_entrees);
     printf("Offset   Info     Type             Sym.Value Sym.Name\n");
     
-    elf_entree_REL* entree;
     for (int i = 0; i < tableau->nb_entrees; i++)
     {
-        entree = &tableau->entrees[i];
-        printf("%08x %08x %-16s %08x %s\n",
-            entree->offset,
-            entree->info,
-            entree->type,
-            entree->valeur,
-            entree->nom);
+        elf_entree_REL* e = &tableau->entrees[i];
+
+        // Si le nom est vide
+        int has_name = (e->nom && e->nom[0] != '\0');
+
+        if (has_name) {
+            printf("%08x %08x %-16s %08x %s\n",
+                   e->offset, e->info, e->type, e->valeur, e->nom);
+        } else {
+            printf("%08x %08x %-16s\n",
+                   e->offset, e->info, e->type);
+        }
     }
 }
 
-//Charge les relations d'une table RELA
+// Charge les relations d'une table RELA
 elf_tableau_RELA* charger_table_RELA(Elf32_Shdr* reitab, elf_contexte_t* ctx, int index) {
     elf_tableau_RELA* tableau = malloc(sizeof(elf_tableau_RELA));
+    if (!tableau) return NULL;
 
     int nb_relations = reitab->sh_size / reitab->sh_entsize;
     Elf32_Rela* entree_rela = malloc(reitab->sh_size);
+    if (!entree_rela) {
+        free(tableau);
+        return NULL;
+    }
 
     tableau->nb_entrees = nb_relations;
     tableau->entrees = malloc(sizeof(elf_entree_RELA) * nb_relations);
-    
-    char nom[32];
-    strcpy(nom, ctx->noms_sections + index);
-    tableau->nom = nom;
+    if (!tableau->entrees) {
+        free(entree_rela);
+        free(tableau);
+        return NULL;
+    }
+
+    const char* nom_section = ctx->noms_sections + ctx->sections[index].sh_name;
+    tableau->nom = strdup(nom_section);
+    if (!tableau->nom) {
+        free(tableau->entrees);
+        free(entree_rela);
+        free(tableau);
+        return NULL;
+    }
+
     tableau->offset = reitab->sh_offset;
-        
+       
     fseek(ctx->file, reitab->sh_offset, SEEK_SET);
     if (fread(entree_rela, reitab->sh_size, 1, ctx->file) != 1) {
         printf("ERREUR fread RELA\n");
+        free(tableau->nom);
+        free(tableau->entrees);
+        free(entree_rela);
+        free(tableau);
         exit(1);
     }
-    
-    Elf32_Rela* curr_rela;
-    elf_entree_RELA* curr_entree;
-    unsigned char type_c;
-    char* type_s = malloc(sizeof(char) * 32);
-    int sym_c;
-    int val_s;
-    char* nom_s = malloc(sizeof(char) * 32);
+   
     for (int i = 0; i < nb_relations; i++)
     {
-        curr_rela = inverse_RELA(&entree_rela[i]);
-        curr_entree = malloc(sizeof(elf_entree_RELA));
+        inverse_RELA(&entree_rela[i]);
 
-        //On extrait le type, et on l'associe à son équivalent texte
-        type_c = (unsigned char)curr_rela->r_info;
-        type_to_string((int)type_c, type_s);
-    
-        //On extrait l'index de table des symboles, et on l'associe à la table des symboles
-        sym_c = (int)(curr_rela->r_info >> 8);
-        val_s = valeur_symbole(ctx, sym_c);
-        strcpy(nom_s, nom_symbole(ctx, sym_c));
+        unsigned char type_c = ELF32_R_TYPE(entree_rela[i].r_info);
+        int sym_c = ELF32_R_SYM(entree_rela[i].r_info);
 
-        curr_entree->offset = curr_rela->r_offset;
-        curr_entree->info = curr_rela->r_info;
-        curr_entree->type = type_s;
-        curr_entree->valeur = val_s;
-        curr_entree->nom = nom_s;
-        curr_entree->addend = (int)curr_rela->r_addend;
+        elf_entree_RELA* curr_entree = &tableau->entrees[i];
 
-        tableau->entrees[i] = *curr_entree;
+        curr_entree->offset = entree_rela[i].r_offset;
+        curr_entree->info   = entree_rela[i].r_info;
+        curr_entree->addend = (int)entree_rela[i].r_addend;
+
+        curr_entree->type = malloc(64);
+        if (curr_entree->type) {
+            type_to_string((int)type_c, curr_entree->type);
+        } else {
+            curr_entree->type = "ERROR_MALLOC_TYPE";
+        }
+        const char* nom_sym = nom_symbole(ctx, sym_c);
+        if (nom_sym && nom_sym[0] != '\0') {
+            curr_entree->nom = strdup(nom_sym);
+            if (!curr_entree->nom) {
+                curr_entree->nom = "ERROR_MALLOC_NOM";
+            }
+        } else {
+            curr_entree->nom = strdup("");
+            if (!curr_entree->nom) {
+                curr_entree->nom = "";
+            }
+        }
+        curr_entree->valeur = valeur_symbole(ctx, sym_c);
     }
-    free (curr_rela);
+
+    free(entree_rela);
     return tableau;
 }
 
@@ -208,17 +258,19 @@ void afficher_table_RELA(elf_tableau_RELA* tableau)
     printf("Section de readressage %s à l'adresse offset 0x%x contient %d entrées : \n", tableau->nom, tableau->offset, tableau->nb_entrees);
     printf("Offset   Info     Type             Sym.Value Sym.Name + Addend\n");
     
-    elf_entree_RELA* entree;
     for (int i = 0; i < tableau->nb_entrees; i++)
     {
-        entree = &tableau->entrees[i];
-        printf("%08x %08x %-16s %08x %s %d \n",
-            entree->offset,
-            entree->info,
-            entree->type,
-            entree->valeur,
-            entree->nom,
-            entree->addend);
+        elf_entree_RELA* e = &tableau->entrees[i];
+
+        int has_name = (e->nom && e->nom[0] != '\0');
+
+        if (has_name) {
+            printf("%08x %08x %-16s %08x %s %d\n",
+                   e->offset, e->info, e->type, e->valeur, e->nom, e->addend);
+        } else {
+            printf("%08x %08x %-16s %d\n",
+                   e->offset, e->info, e->type, e->addend);
+        }
     }
 }
 
@@ -276,4 +328,39 @@ int afficher_tables_reimplantations(elf_tables_reimplantations* tables)
         afficher_table_RELA(&tables->tableaux_RELA[i]);
     }
     return 0;
+}
+
+void liberer_tables_reimplantations(elf_tables_reimplantations* tables)
+{
+    if (!tables) return;
+
+    // Libération des tables REL
+    for (int i = 0; i < tables->nb_REL; i++)
+    {
+        // Libérer le nom de la section
+        free(tables->tableaux_REL[i].nom);
+
+        // Libérer chaque entrée
+        for (int j = 0; j < tables->tableaux_REL[i].nb_entrees; j++)
+        {
+            free(tables->tableaux_REL[i].entrees[j].type);
+            free(tables->tableaux_REL[i].entrees[j].nom);
+        }
+        // Libérer le tableau d'entrées
+        free(tables->tableaux_REL[i].entrees);
+    }
+    free(tables->tableaux_REL);
+
+    for (int i = 0; i < tables->nb_RELA; i++)
+    {
+        free(tables->tableaux_RELA[i].nom);
+        for (int j = 0; j < tables->tableaux_RELA[i].nb_entrees; j++)
+        {
+            free(tables->tableaux_RELA[i].entrees[j].type);
+            free(tables->tableaux_RELA[i].entrees[j].nom);
+        }
+        free(tables->tableaux_RELA[i].entrees);
+    }
+    free(tables->tableaux_RELA);
+    free(tables);
 }

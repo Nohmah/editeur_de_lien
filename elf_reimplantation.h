@@ -44,8 +44,10 @@ typedef struct {
     int nb_RELA;
 } elf_tables_reimplantations;
 
-/* Charger et affcicher les tables de réimplantations */
+/* Charger et afficher les tables de réimplantations */
 elf_tables_reimplantations* charger_tables_reimplantations(elf_contexte_t* ctx);
 int afficher_tables_reimplantations(elf_tables_reimplantations* tables);
+
+void liberer_tables_reimplantations(elf_tables_reimplantations* tables);
 
 #endif

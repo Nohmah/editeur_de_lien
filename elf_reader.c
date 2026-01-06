@@ -95,7 +95,10 @@ int main(int argc, char *argv[]) {
 	else if (strcmp(commande, "-r") == 0) {
 	    lire_table_sections(&ctx);
 	    lire_noms_sections(&ctx);
-      	afficher_tables_reimplantations(charger_tables_reimplantations(&ctx));
+	    charger_table_symboles(&ctx);
+      	elf_tables_reimplantations* tables = charger_tables_reimplantations(&ctx);
+   		afficher_tables_reimplantations(tables);
+    	liberer_tables_reimplantations(tables);
 	}
 	else if (strcmp(commande, "-f") == 0) {
         if (argc < 4) {
