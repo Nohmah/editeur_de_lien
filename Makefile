@@ -12,6 +12,7 @@ elf_lecture_section.o: elf_lecture_section.c elf_lecture_section.h
 elf_reimplantation.o: elf_reimplantation.c elf_reimplantation.h elf_symboles.h
 fonc_inversion.o: fonc_inversion.c fonc_inversion.h
 fusion_table.o: fusion_table.c fusion_table.h
+elf_fusion_symboles.o: elf_fusion_symboles.c elf_fusion_symboles.h elf_symboles.h
 
 clean:
 	rm -f *.o elf_reader
