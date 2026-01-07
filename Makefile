@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Werror
 
-elf_reader: elf_reader.o elf_header.o elf_section_table.o elf_lecture_section.o elf_symboles.o elf_reimplantation.o fonc_inversion.o fusion_table.o
+elf_reader: elf_reader.o elf_header.o elf_section_table.o elf_lecture_section.o elf_symboles.o elf_reimplantation.o fonc_inversion.o fusion_table.o elf_fusion_symboles.o
 	$(CC) -o $@ $^
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

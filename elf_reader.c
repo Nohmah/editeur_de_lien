@@ -11,6 +11,7 @@
 #include "elf_reimplantation.h"
 #include "fusion_table.h"
 #include "fonc_inversion.h"
+#include "elf_fusion_symboles.h"
 
 void usage(char *programme) {
     fprintf(stderr, "\nUsage:\n");
@@ -21,8 +22,10 @@ void usage(char *programme) {
     fprintf(stderr, "  -x <section>       Afficher le contenu d'une section\n");
     fprintf(stderr, "  -s                 Afficher la table des symboles\n");
     fprintf(stderr, "  -r                 Afficher les tables de réimplantation\n");
+    fprintf(stderr, "  -f <fichier ELF2>  Fusionner avec un autre fichier ELF\n");
     fprintf(stderr, "  --help             Afficher ce message\n");
     fprintf(stderr, "Pour -x, spécifiez le nom ou le numéro de la section\n");
+    fprintf(stderr, "pour la fusion le fichier fusionné sera 'fusion.o'\n");
     fprintf(stderr, "Seuls les fichiers ELF 32 bits ARM big endian sont supportés.\n\n");
 }
 int main(int argc, char *argv[]) {
@@ -149,7 +152,8 @@ int main(int argc, char *argv[]) {
             shstrtab_size += strlen(fusion[i].name) + 1; // nom + /0
         }
         shstrtab_size += strlen(".shstrtab") + 1; // son propre nom
-
+        shstrtab_size += strlen(".symtab") + 1; // nom de la table des symboles
+        shstrtab_size += strlen(".strtab") + 1; // nom de la table des chaînes
         char *shstrtab = malloc(shstrtab_size);
         if (!shstrtab) { perror("malloc shstrtab"); exit(1); }
 
@@ -164,9 +168,13 @@ int main(int argc, char *argv[]) {
         }
         uint32_t shstrtab_name_offset = offset;
         strcpy(shstrtab + offset, ".shstrtab");
+        offset += strlen(".shstrtab") + 1;
+        strcpy(shstrtab + offset, ".symtab");
+        offset += strlen(".symtab") + 1;
+        strcpy(shstrtab + offset, ".strtab");
 
-        // Reconstruire une table complète : NULL + PROGBITS + .shstrtab
-        int total_sections = fusion_count + 2;
+        // Reconstruire une table complète : NULL + PROGBITS  + .symtab + .strtab + .shstrtab
+        int total_sections = fusion_count + 4;
         Elf32_Shdr *full_sections = calloc(total_sections, sizeof(Elf32_Shdr));
         if (!full_sections) { perror("calloc full_sections"); exit(1); }
 
@@ -181,13 +189,45 @@ int main(int argc, char *argv[]) {
             full_sections[i + 1].sh_addr = 0;
         }
 
+        // Fusionner les tables de symboles
+        charger_table_symboles(&ctx);
+        charger_table_symboles(&ctx2);
+        elf_table_sym_t* table_sym_fusion = fusion_tables_symboles(&ctx, &ctx2);
+        if (table_sym_fusion == NULL) { perror("fusion_tables_symboles"); exit(1); }
+
+        // Section .symtab
+        int symtab_idx = total_sections - 3;
+        full_sections[symtab_idx].sh_name = shstrtab_name_offset + strlen(".shstrtab") + 1; // Nom dans .shstrtab
+        full_sections[symtab_idx].sh_type = SHT_SYMTAB;
+        full_sections[symtab_idx].sh_flags = 0;
+        full_sections[symtab_idx].sh_addr = 0;
+        full_sections[symtab_idx].sh_offset = full_sections[symtab_idx - 1].sh_offset + full_sections[symtab_idx - 1].sh_size;
+        full_sections[symtab_idx].sh_size = table_sym_fusion->nb_symboles * sizeof(Elf32_Sym);
+        full_sections[symtab_idx].sh_addralign = 1;
+        full_sections[symtab_idx].sh_entsize = sizeof(Elf32_Sym);
+        full_sections[symtab_idx].sh_link = symtab_idx + 1; // Lien vers .strtab
+
+        // Section .strtab
+        int strtab_idx = total_sections - 2;
+        //size_t strtab_size = table_sym_fusion->size_strtab; A CALCULER CORRECTEMENT
+
+        full_sections[strtab_idx].sh_name = shstrtab_name_offset + strlen(".shstrtab") + 1 + strlen(".symtab") + 1; // Nom dans .shstrtab
+        full_sections[strtab_idx].sh_type = SHT_STRTAB;
+        full_sections[strtab_idx].sh_flags = 0;
+        full_sections[strtab_idx].sh_addr = 0;
+        full_sections[strtab_idx].sh_offset = full_sections[symtab_idx].sh_offset + full_sections[symtab_idx].sh_size;
+        full_sections[strtab_idx].sh_size = 1000; // A CALCULER CORRECTEMENT
+        full_sections[strtab_idx].sh_addralign = 1;
+        full_sections[strtab_idx].sh_entsize = 0;
+        full_sections[strtab_idx].sh_link = 0;
+
         // Section .shstrtab
         int shstrtab_idx = total_sections - 1;
         full_sections[shstrtab_idx].sh_name = shstrtab_name_offset;
         full_sections[shstrtab_idx].sh_type = SHT_STRTAB;
         full_sections[shstrtab_idx].sh_flags = 0;
         full_sections[shstrtab_idx].sh_addr = 0;
-        full_sections[shstrtab_idx].sh_offset = 0;
+        full_sections[shstrtab_idx].sh_offset = 0; // À remplir plus tard
         full_sections[shstrtab_idx].sh_size = shstrtab_size;
         full_sections[shstrtab_idx].sh_addralign = 1;
 
@@ -203,6 +243,15 @@ int main(int argc, char *argv[]) {
             exit(1);
             exit(1);
         }
+
+        // Écrire .symtab et .strtab
+        inverse_Sym(table_sym_fusion->symboles, table_sym_fusion->nb_symboles);
+        fseek(out_ctx.file, full_sections[symtab_idx].sh_offset, SEEK_SET);
+        fwrite(table_sym_fusion->symboles, sizeof(Elf32_Sym), table_sym_fusion->nb_symboles, out_ctx.file);
+        fwrite(table_sym_fusion->noms_symboles, 1, 1000, out_ctx.file); // A CALCULER LA TAILLE CORRECTEMENT
+
+        detruire_table_sym(table_sym_fusion);
+
 
         // Écrire .shstrtab
         long shstrtab_offset = ftell(out_ctx.file);
@@ -253,6 +302,7 @@ int main(int argc, char *argv[]) {
 
         printf("Fichier fusion.o généré avec succès. (%d sections PROGBITS)\n", fusion_count);
         printf("En-tête ELF, .shstrtab et table des sections inclus\n");
+        printf("Tables des symboles fusionnées incluses\n");
 	} else {
 	    fprintf(stderr, "Commande non reconnue: %s\n", commande);
 	    usage(argv[0]);
