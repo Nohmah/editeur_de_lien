@@ -32,13 +32,20 @@ Pour utiliser le programme, exécuter la commande "make" dans le terminal.
 Puis pour afficher des informations lancer :
 ./elf_reader (fichier ELF) (paramètre)
 
-Liste des paramètres disponibles : -h, -S, -s, -x, -r.
-Vous pouvez lancer ./elf_reader sans paramètre pour obtenir plus d’informations sur les différents paramètres disponibles.
+Liste des paramètres disponibles :
+-h                 Afficher l'en-tête
+-S                 Afficher la table des sections  
+-x <section>       Afficher le contenu d'une section
+-s                 Afficher la table des symboles
+-r                 Afficher les tables de réimplantation
+-f <fichier ELF2>  Fusionner avec un autre fichier ELF (crée fusion.o)
+-F <fichier ELF2>  Afficher les tables de réimplantation fusionnées (sans créer de fichier)
+--help             Afficher ce message
 
-et pour fusionner lancer :
-./elf_reader (fichier ELF1) -f (fichier ELF2)
-(le fichier fusion est appelé fusion.o et se trouve dans le même dossier que le elf_reader)
+Vous pouvez lancer ./elf_reader sans paramètre pour obtenir ces informations.
 
+# Pour lancer les tests
+make test
 
 ## Contenu de chaque fichier
 *(Nom du fichier — Contenu)*
@@ -59,9 +66,10 @@ et pour fusionner lancer :
 Fichiers de fusion et d’écriture
 - elf_fusion_reimplantation : contient les fonctions permettant de fusionner les tables de réimplantation, ainsi que la structure `symbol_mapping_t`.
 - elf_fusion_symboles : contient les fonctions permettant de fusionner et de construire la table des symboles, ainsi que les structures `elf_table_sym_t` et `elf_table_sep_t`.
--*fusion_table : contient les fonctions permettant de fusionner la table des sections, de recalculer les offsets et d’écrire le fichier ELF résultant.
+- fusion_table : contient les fonctions permettant de fusionner la table des sections, de recalculer les offsets et d’écrire le fichier ELF résultant.
 
-
+Le dossier tests contient des scripts de test.
+Le dossier Examples_fusion contient des fichiers ELF pour les tests.
 
 
 ## Crédits :
