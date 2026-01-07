@@ -10,6 +10,7 @@
 #include "elf_lecture_section.h"
 #include "elf_reimplantation.h"
 #include "fusion_table.h"
+#include "fonc_inversion.h"
 
 void usage(char *programme) {
     fprintf(stderr, "\nUsage:\n");
@@ -129,20 +130,129 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "fusion_section_table a échoué\n");
             fclose(f2); exit(1);
         }
-        concat_offset(&ctx, &ctx2, fusion, fusion_count);
 
-        out.file = fopen("fusion.o", "wb+");
-        if (!out.file) { perror("fusion.o"); exit(1); }
+        // Calcul des offsets
+		concat_offset(&ctx, &ctx2, fusion, fusion_count);
 
-        build_output_section_headers(&ctx, &ctx2, &out, fusion, fusion_count);
-        write_sections(&ctx, &ctx2, &out, fusion, fusion_count);
+        // Contexte de sortie
+        elf_contexte_t out_ctx;
+        memset(&out_ctx, 0, sizeof(out_ctx));
+        out_ctx.file = fopen("fusion.o", "wb");
+        if (!out_ctx.file) { perror("fusion.o"); exit(1); }
 
-        printf("Fichier fusion.o généré avec %d sections PROGBITS.\n", fusion_count);
+        // Construire les en-têtes des sections PROGBITS seulement
+        build_output_section_headers(&ctx, &ctx2, &out_ctx, fusion, fusion_count);
 
+        // Construire la .shstrtab (table des noms des sections)
+        size_t shstrtab_size = 1; // Section NULL
+        for (int i = 0; i < fusion_count; i++) {
+            shstrtab_size += strlen(fusion[i].name) + 1; // nom + /0
+        }
+        shstrtab_size += strlen(".shstrtab") + 1; // son propre nom
+
+        char *shstrtab = malloc(shstrtab_size);
+        if (!shstrtab) { perror("malloc shstrtab"); exit(1); }
+
+        size_t offset = 1;
+        shstrtab[0] = '\0';
+
+        uint32_t offset_nom[fusion_count];
+        for (int i = 0; i < fusion_count; i++) {
+            offset_nom[i] = offset;
+            strcpy(shstrtab + offset, fusion[i].name);
+            offset += strlen(fusion[i].name) + 1;
+        }
+        uint32_t shstrtab_name_offset = offset;
+        strcpy(shstrtab + offset, ".shstrtab");
+
+        // Reconstruire une table complète : NULL + PROGBITS + .shstrtab
+        int total_sections = fusion_count + 2;
+        Elf32_Shdr *full_sections = calloc(total_sections, sizeof(Elf32_Shdr));
+        if (!full_sections) { perror("calloc full_sections"); exit(1); }
+
+        // Section 0 : NULL
+        memset(&full_sections[0], 0, sizeof(Elf32_Shdr));
+
+        // Sections 1 à fusion_count
+        for (int i = 0; i < fusion_count; i++) {
+            int old_idx = fusion[i].idx_out;
+            full_sections[i + 1] = out_ctx.sections[old_idx];
+            full_sections[i + 1].sh_name = offset_nom[i];
+            full_sections[i + 1].sh_addr = 0;
+        }
+
+        // Section .shstrtab
+        int shstrtab_idx = total_sections - 1;
+        full_sections[shstrtab_idx].sh_name = shstrtab_name_offset;
+        full_sections[shstrtab_idx].sh_type = SHT_STRTAB;
+        full_sections[shstrtab_idx].sh_flags = 0;
+        full_sections[shstrtab_idx].sh_addr = 0;
+        full_sections[shstrtab_idx].sh_offset = 0;
+        full_sections[shstrtab_idx].sh_size = shstrtab_size;
+        full_sections[shstrtab_idx].sh_addralign = 1;
+
+        // Écrire les données des PROGBITS
+        if (write_sections(&ctx, &ctx2, &out_ctx, fusion, fusion_count) != 0) {
+            fprintf(stderr, "Erreur lors de l'écriture des sections\n");
+            fclose(out_ctx.file);               
+            free(shstrtab);                     
+            if (out_ctx.sections) free(out_ctx.sections);  
+            for (int i = 0; i < fusion_count; i++) free(fusion[i].name);
+            free(fusion);
+            fclose(f2);
+            exit(1);
+            exit(1);
+        }
+
+        // Écrire .shstrtab
+        long shstrtab_offset = ftell(out_ctx.file);
+        fwrite(shstrtab, 1, shstrtab_size, out_ctx.file);
+
+        // Mettre à jour l'offset dans full_sections
+        full_sections[shstrtab_idx].sh_offset = shstrtab_offset;
+
+        // Écrire l'en-tête ELF
+        Elf32_Ehdr ehdr_out;
+        memset(&ehdr_out, 0, sizeof(ehdr_out));
+        memcpy(ehdr_out.e_ident, ctx.ehdr.e_ident, EI_NIDENT);
+        ehdr_out.e_type = ET_REL;
+        ehdr_out.e_machine = EM_ARM;
+        ehdr_out.e_version = EV_CURRENT;
+        ehdr_out.e_entry = 0;
+        ehdr_out.e_phoff = 0;
+        ehdr_out.e_flags = ctx.ehdr.e_flags;
+        ehdr_out.e_shnum = total_sections;
+        ehdr_out.e_shentsize = sizeof(Elf32_Shdr);
+        ehdr_out.e_shstrndx = shstrtab_idx;
+
+        // Table des sections à la fin
+        long table_offset = ftell(out_ctx.file);
+        ehdr_out.e_shoff = table_offset;
+
+        // Écrire la table des sections (big endian)
+        for (int i = 0; i < total_sections; i++) {
+            Elf32_Shdr sh_be = full_sections[i];
+            inverse_Section(&sh_be, 1);
+            fwrite(&sh_be, sizeof(Elf32_Shdr), 1, out_ctx.file);
+        }
+
+        // Réécrire l'en-tête ELF au début du fichier
+        fseek(out_ctx.file, 0, SEEK_SET);
+        Elf32_Ehdr ehdr_be = ehdr_out;
+        inverse_entete(&ehdr_be);
+        fwrite(&ehdr_be, sizeof(Elf32_Ehdr), 1, out_ctx.file);
+
+        // Nettoyage
+        free(shstrtab);
+        free(out_ctx.sections);
+        free(full_sections);
         for (int i = 0; i < fusion_count; i++) free(fusion[i].name);
         free(fusion);
-        fclose(out.file);
+        fclose(out_ctx.file);
         fclose(f2);
+
+        printf("Fichier fusion.o généré avec succès. (%d sections PROGBITS)\n", fusion_count);
+        printf("En-tête ELF, .shstrtab et table des sections inclus\n");
 	} else {
 	    fprintf(stderr, "Commande non reconnue: %s\n", commande);
 	    usage(argv[0]);

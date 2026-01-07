@@ -20,6 +20,10 @@ int fusion_section_table(elf_contexte_t* ctx1, elf_contexte_t* ctx2, section_fus
 
         const char *name = section_name(ctx1, i);
 
+        // enonce (debug ignore)
+        if (strncmp(name, ".debug", 6) == 0)
+            continue;
+
         section_fusion_t *tmp = realloc(
             *sections,
             (*nb_sections + 1) * sizeof(**sections)
@@ -45,6 +49,10 @@ int fusion_section_table(elf_contexte_t* ctx1, elf_contexte_t* ctx2, section_fus
             continue;
 
         const char *name = section_name(ctx2, i);
+        // enonce (debug ignore)
+        if (strncmp(name, ".debug", 6) == 0)
+            continue;
+
         int found = 0;
 
         for (int j = 0; j < *nb_sections; j++) {
