@@ -12,6 +12,7 @@
 #include "fusion_table.h"
 #include "fonc_inversion.h"
 #include "elf_fusion_symboles.h"
+#include "elf_fusion_reimplantation.h"
 
 void usage(char *programme) {
     fprintf(stderr, "\nUsage:\n");
@@ -303,6 +304,112 @@ int main(int argc, char *argv[]) {
         printf("Fichier fusion.o généré avec succès. (%d sections PROGBITS)\n", fusion_count);
         printf("En-tête ELF, .shstrtab et table des sections inclus\n");
         printf("Tables des symboles fusionnées incluses\n");
+
+    } else if (strcmp(commande, "-F") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: %s <file1.o> -F <file2.o>\n", argv[0]);
+            exit(1);
+        }
+        
+        // Ouvrir le deuxième fichier
+        FILE* f2 = fopen(argv[3], "rb");
+        if(!f2){
+            if (errno == ENOENT){
+                fprintf(stderr, "Erreur : le fichier '%s' n'existe pas.\n", argv[3]);
+            } else {
+                fprintf(stderr, "Erreur lors de l'ouverture du fichier.\n");
+            }
+            fclose(f);
+            exit(1);
+        }
+        
+        // Vérifier le deuxième fichier
+        elf_contexte_t ctx2;
+        memset(&ctx2, 0, sizeof(ctx2));
+        
+        if (!verifier_fichier(f2, &ctx2)){
+            fprintf(stderr, "Le deuxième fichier n'est pas un ELF 32 bits ARM big endian.\n");
+            fclose(f2);
+            fclose(f);
+            exit(1);
+        }
+        
+        // Charger les sections et noms pour les deux fichiers
+        lire_table_sections(&ctx);
+        lire_noms_sections(&ctx);
+        lire_table_sections(&ctx2);
+        lire_noms_sections(&ctx2);
+        
+        // Charger les tables de réimplantation des deux fichiers
+        charger_table_symboles(&ctx);
+        charger_table_symboles(&ctx2);
+        
+        elf_tables_reimplantations* tables1 = charger_tables_reimplantations(&ctx);
+        elf_tables_reimplantations* tables2 = charger_tables_reimplantations(&ctx2);
+        
+        if (!tables1 || !tables2) {
+            fprintf(stderr, "Erreur lors du chargement des tables de réimplantation\n");
+            if (tables1) liberer_tables_reimplantations(tables1);
+            if (tables2) liberer_tables_reimplantations(tables2);
+            fclose(f2);
+            fclose(f);
+            exit(1);
+        }
+        
+        // Fusionner les tables des sections
+        section_fusion_t *fusion = NULL;
+        int fusion_count = 0;
+        
+        if (fusion_section_table(&ctx, &ctx2, &fusion, &fusion_count) != 0) {
+            fprintf(stderr, "Erreur lors de la fusion des tables des sections\n");
+            liberer_tables_reimplantations(tables1);
+            liberer_tables_reimplantations(tables2);
+            fclose(f2);
+            fclose(f);
+            exit(1);
+        }
+        
+        // Calculer les offsets de concaténation
+        concat_offset(&ctx, &ctx2, fusion, fusion_count);
+        
+        
+        // Charger et fusionner les tables de symboles
+        //lire_table_symboles(&ctx);
+        //lire_table_symboles(&ctx2);
+
+        elf_table_sym_t* table_sym_fusion = fusion_tables_symboles(&ctx, &ctx2);
+        
+        if (!table_sym_fusion) {
+            fprintf(stderr, "Erreur lors de la fusion des tables de symboles\n");
+            liberer_tables_reimplantations(tables1);
+            liberer_tables_reimplantations(tables2);
+            for (int i = 0; i < fusion_count; i++) free(fusion[i].name);
+            free(fusion);
+            fclose(f2);
+            fclose(f);
+            exit(1);
+        }
+        
+        // Fusionner les tables de réimplantation
+        elf_tables_reimplantations* tables_fusion = fusionner_tables_reimplantations(
+            &ctx, &ctx2, tables1, tables2, fusion, fusion_count, table_sym_fusion);
+        
+        if (!tables_fusion) {
+            fprintf(stderr, "Erreur lors de la fusion des tables de réimplantation\n");
+        } else {
+            // Afficher les tables fusionnées
+            printf("=== TABLES DE REIMPLANTATION FUSIONNEES ===\n\n");
+            afficher_tables_reimplantations(tables_fusion);
+            liberer_tables_reimplantations(tables_fusion);
+        }
+        
+        // Nettoyage
+        liberer_tables_reimplantations(tables1);
+        liberer_tables_reimplantations(tables2);
+        detruire_table_sym(table_sym_fusion);
+        for (int i = 0; i < fusion_count; i++) free(fusion[i].name);
+        free(fusion);
+        fclose(f2);
 	} else {
 	    fprintf(stderr, "Commande non reconnue: %s\n", commande);
 	    usage(argv[0]);

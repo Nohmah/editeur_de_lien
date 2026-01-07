@@ -1,11 +1,11 @@
 CC=gcc
 CFLAGS=-Wall -Werror
 
-elf_reader: elf_reader.o elf_header.o elf_section_table.o elf_lecture_section.o elf_symboles.o elf_reimplantation.o fonc_inversion.o fusion_table.o elf_fusion_symboles.o
+elf_reader: elf_reader.o elf_header.o elf_section_table.o elf_lecture_section.o elf_symboles.o elf_reimplantation.o fonc_inversion.o fusion_table.o elf_fusion_symboles.o elf_fusion_reimplantation.o
 	$(CC) -o $@ $^
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
-elf_reader.o: elf_reader.c elf_header.h elf_section_table.h elf_symboles.h
+elf_reader.o: elf_reader.c elf_header.h elf_section_table.h elf_symboles.h elf_fusion_reimplantation.h
 elf_section_table.o: elf_section_table.c elf_section_table.h
 elf_symboles.o: elf_symboles.c elf_symboles.h fonc_inversion.h
 elf_lecture_section.o: elf_lecture_section.c elf_lecture_section.h
@@ -13,6 +13,7 @@ elf_reimplantation.o: elf_reimplantation.c elf_reimplantation.h elf_symboles.h
 fonc_inversion.o: fonc_inversion.c fonc_inversion.h
 fusion_table.o: fusion_table.c fusion_table.h
 elf_fusion_symboles.o: elf_fusion_symboles.c elf_fusion_symboles.h elf_symboles.h
+elf_fusion_reimplantation.o: elf_fusion_reimplantation.c elf_fusion_reimplantation.h
 
 clean:
 	rm -f *.o elf_reader
