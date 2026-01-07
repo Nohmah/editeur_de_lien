@@ -12,7 +12,7 @@ echo "=========================================="
 echo ""
 
 # Vérifier si elf_reader existe
-if [ ! -f "./elf_reader" ]; then
+if [ ! -f "../elf_reader" ]; then
     echo -e "${RED}Erreur: elf_reader n'existe pas${NC}"
     echo "Compilez d'abord avec: make"
     exit 1
@@ -28,7 +28,7 @@ if [ ${#OBJ_FILES[@]} -lt 2 ]; then
     echo "Génération de fichiers de test..."
     
     # Créer des fichiers assembleur simples pour les tests
-    cat > test1.s << 'EOF'
+    cat > test1.s << 'EOF2'
     .text
     .global func1
 func1:
@@ -39,9 +39,9 @@ func1:
     .data
 data1:
     .word 0x12345678
-EOF
+EOF2
 
-    cat > test2.s << 'EOF'
+    cat > test2.s << 'EOF2'
     .text
     .global func2
 func2:
@@ -52,7 +52,7 @@ func2:
     .data
 data2:
     .word 0x87654321
-EOF
+EOF2
 
     # Compiler les fichiers de test
     echo "Compilation de test1.s et test2.s..."
@@ -82,27 +82,27 @@ echo ""
 
 # Test 1: Affichage de l'en-tête
 echo -e "${YELLOW}[Test 1] Affichage de l'en-tête de $FILE1${NC}"
-./elf_reader $FILE1 -h
+../elf_reader $FILE1 -h
 echo ""
 
 # Test 2: Affichage des sections
 echo -e "${YELLOW}[Test 2] Affichage des sections de $FILE1${NC}"
-./elf_reader $FILE1 -S
+../elf_reader $FILE1 -S
 echo ""
 
 # Test 3: Affichage de la table des symboles
 echo -e "${YELLOW}[Test 3] Affichage de la table des symboles de $FILE1${NC}"
-./elf_reader $FILE1 -s
+../elf_reader $FILE1 -s
 echo ""
 
 # Test 4: Affichage des réimplantations
 echo -e "${YELLOW}[Test 4] Affichage des réimplantations de $FILE1${NC}"
-./elf_reader $FILE1 -r
+../elf_reader $FILE1 -r
 echo ""
 
 # Test 5: Fusion complète avec réimplantations (Étape 8)
 echo -e "${YELLOW}[Test 5] Fusion complète avec réimplantations (Étape 8)${NC}"
-./elf_reader $FILE1 -F $FILE2
+../elf_reader $FILE1 -F $FILE2
 echo ""
 
 # Vérifier si la fusion a réussi
@@ -113,7 +113,7 @@ if [ $? -eq 0 ]; then
     if command -v arm-none-eabi-ld &> /dev/null; then
         echo ""
         echo -e "${YELLOW}[Comparaison] Création d'une référence avec GNU ld${NC}"
-        arm-none-eabi-ld -r -o reference.o $FILE1 $FILE2 2>/dev/null
+        arm-none-eabi-ld -r -EB -o reference.o $FILE1 $FILE2 2>/dev/null
         
         if [ -f reference.o ]; then
             echo "Référence créée: reference.o"
