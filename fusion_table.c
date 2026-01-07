@@ -9,6 +9,23 @@ static const char* section_name(const elf_contexte_t* ctx, int i){
     return ctx->noms_sections + ctx->sections[i].sh_name;
 }
 
+// Vérifie si une section doit être ignorée
+static int should_skip_section(const char* name) {
+    // Ignorer les sections de debug
+    if (strncmp(name, ".debug", 6) == 0)
+        return 1;
+    
+    // Ignorer la section comment
+    if (strcmp(name, ".comment") == 0)
+        return 1;
+    
+    // Ignorer les sections ARM-specific qui ne doivent pas être fusionnées
+    if (strcmp(name, ".ARM.attributes") == 0)
+        return 1;
+    
+    return 0;
+}
+
 int fusion_section_table(elf_contexte_t* ctx1, elf_contexte_t* ctx2, section_fusion_t** sections, int* nb_sections){
     *sections = NULL;
     *nb_sections = 0;
@@ -20,8 +37,8 @@ int fusion_section_table(elf_contexte_t* ctx1, elf_contexte_t* ctx2, section_fus
 
         const char *name = section_name(ctx1, i);
 
-        // enonce (debug ignore)
-        if (strncmp(name, ".debug", 6) == 0)
+        // Ignorer debug, comment, etc.
+        if (should_skip_section(name))
             continue;
 
         section_fusion_t *tmp = realloc(
@@ -49,8 +66,9 @@ int fusion_section_table(elf_contexte_t* ctx1, elf_contexte_t* ctx2, section_fus
             continue;
 
         const char *name = section_name(ctx2, i);
-        // enonce (debug ignore)
-        if (strncmp(name, ".debug", 6) == 0)
+        
+        // Ignorer debug, comment, etc.
+        if (should_skip_section(name))
             continue;
 
         int found = 0;
@@ -145,7 +163,7 @@ int write_sections(elf_contexte_t *ctx1, elf_contexte_t *ctx2, elf_contexte_t *c
 
         long pos = ftell(ctxout->file);
         if (pos < 0) return -1;
-        out->sh_offset = (Elf32_Word)pos; // offset défini au moment de l’écriture
+        out->sh_offset = (Elf32_Word)pos; // offset défini au moment de l'écriture
 
         // Écrit la partie ctx1
         if (s->idx_ctx1 != -1) {
