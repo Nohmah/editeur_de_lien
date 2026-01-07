@@ -22,18 +22,47 @@ Le but de ce projet est de pouvoir :
 Le format ELF (Executable and Linkable Format) est utilisé pour faciliter la compilation séparée.
 Il est possible d’en créer facilement avec le paramètre -c lors de la compilation (fichiers .o).
 
-Dans ce projet, nous nous limitons au format ELF 32 bits,
+Dans ce projet, nous nous limitons avec des fichiers .o au format ELF 32 bits,
 ciblant une architecture ARM en big endian.
 Ce mode peut être forcé avec le paramètre -m32.
 
 
 ## Utilisation :
 Pour utiliser le programme, exécuter la commande "make" dans le terminal.
-Puis lancer :
+Puis pour afficher des informations lancer :
 ./elf_reader (fichier ELF) (paramètre)
 
 Liste des paramètres disponibles : -h, -S, -s, -x, -r.
 Vous pouvez lancer ./elf_reader sans paramètre pour obtenir plus d’informations sur les différents paramètres disponibles.
+
+et pour fusionner lancer :
+./elf_reader (fichier ELF1) -f (fichier ELF2)
+(le fichier fusion est appelé fusion.o et se trouve dans le même dossier que le elf_reader)
+
+
+## Contenu de chaque fichier
+*(Nom du fichier — Contenu)*
+
+ Fichier principal :
+- elf_reader : programme principal contenant le `main`. Il permet d’appeler les fonctions appropriées en fonction des paramètres fournis.
+
+
+ Fichiers de lecture et d’affichage
+- elf_header : contient les fonctions permettant d’afficher et de vérifier l’en-tête ELF.
+- elf_lecture_section : fonctions permettant de rechercher et d’afficher le contenu d’une section à partir de son nom ou de son indice.
+- elf_reimplantation : fonctions permettant de lire et d’afficher la table de réimplantation.
+- elf_section_table : fonctions permettant d’afficher la table des sections, ainsi que d’obtenir leur type et leurs flags.
+- elf_symboles : contient les fonctions de lecture de certaines parties du fichier, les fonctions pour charger et afficher la table des symboles, une fonction pour trouver une section, ainsi que la structure `elf_contexte_t`, utilisée dans plusieurs fichiers.
+- fonc_inversion : contient les fonctions permettant d’inverser les structures ELF afin de passer du big endian vers le little endian, et inversement.
+
+
+Fichiers de fusion et d’écriture
+- elf_fusion_reimplantation : contient les fonctions permettant de fusionner les tables de réimplantation, ainsi que la structure `symbol_mapping_t`.
+- elf_fusion_symboles : contient les fonctions permettant de fusionner et de construire la table des symboles, ainsi que les structures `elf_table_sym_t` et `elf_table_sep_t`.
+-*fusion_table : contient les fonctions permettant de fusionner la table des sections, de recalculer les offsets et d’écrire le fichier ELF résultant.
+
+
+
 
 ## Crédits :
 Personnes ayant travaillé sur le projet :
