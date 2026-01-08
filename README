@@ -47,6 +47,12 @@ Vous pouvez lancer ./elf_reader sans paramètre pour obtenir ces informations.
 # Pour lancer les tests
 make test
 
+# Liste des tests
+test_contenu.sh - Permet de tester l'étape 3 en comparant la sortie de elf_reader -x et readelf -x
+test_fusion.sh - Compare la sortie de elf_reader -f et arm-none-eabi-ld (Etape 6-7-8-9)
+test_header.sh - Compare la sortie de elf_reader -h et arm-none-eabi-readelf -h (Etape 1)
+test_symbole.sh - Compare la sortie de elf_reader -s et arm-none-eabi-readelf -s (Etape 3)
+test_table_section.sh Compare la sortie de elf_reader -S et arm-none-eabi-readelf -S (Etape 2)
 ## Contenu de chaque fichier
 *(Nom du fichier — Contenu)*
 
